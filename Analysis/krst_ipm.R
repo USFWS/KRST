@@ -242,9 +242,11 @@ krst.ipm <- nimbleCode({
   for(s in 1:5){
     nest.cov[s] ~ dnorm(0, sd = 0.5)
     beta.temp[s] ~ dnorm(mu.temp, var = var.temp)
+    beta.slr[s] <- 0
   }
   nest.cov[6] <- log(insitu.surv/(1-insitu.surv))
   beta.temp[6] ~ dnorm(-1,sd=1)
+  beta.slr[6] ~ dnorm(-1,sd=1)
   beta.temp.all ~ dnorm(mu.temp, var = var.temp)
   #beta.temp.all2 ~ dnorm(0,sd=2)
   mu.temp ~ dnorm(0, sd = 1)
@@ -275,7 +277,8 @@ krst.ipm <- nimbleCode({
   for(i in 1:N.nest){
     J.ind[i] ~ dbinom(size = E.ind[i], prob = prob.egg.ind[i])
     logit(prob.egg.ind[i]) <- nest.cov[nest.mange[i]] + 
-      beta.temp[nest.mange[i]]*clim.cov[i]
+      beta.temp[nest.mange[i]]*clim.cov[i] +
+      beta.slr[nest.mange[i]]*slr.cov[i]
   }
   
   f[25] ~ dpois(mean(E.ind[1:year.mean.idx[25]])*mean(prob.egg.ind[1:year.mean.idx[25]]))
@@ -285,7 +288,8 @@ krst.ipm <- nimbleCode({
   }
   
   for(t in (Time+1):(Time+Time.fore)){
-    logit(prob.egg.fore.tmp[1:6,(t-31)]) <- nest.cov[1:6] + beta.temp[1:6]*clim.cov.fore[(t-31)]
+    logit(prob.egg.fore.tmp[1:6,(t-31)]) <- nest.cov[1:6] + beta.temp[1:6]*clim.cov.fore[(t-31)] +
+      beta.slr[1:6]*slr.cov.fore[(t-31)]
     prob.egg.fore[(t-31)] <- sum(prob.egg.fore.tmp[1:6,(t-31)]*nest.mange.fore[1:6])/sum(nest.mange.fore[1:6])
     f[t] ~ dpois(E.ind.fore*prob.egg.fore[(t-31)])
   }
@@ -525,24 +529,37 @@ bioc.forecast = read.csv("~/KRST/Analysis/CMIP6_BIOC/CMIP6_BIOC/bioc_means_all.c
 bio5 = subset(hist.bioc.means,bioc == "bio5")
 bio5.out = rep(NA,length(nest.pro$Year)-1)
 bio5.fore.245 = subset(bioc.forecast,bioc == "bio5" & ssp == 245)
-bio5.scale = as.numeric(scale(c(bio5$mean,bio5.fore.245$mean)))
+bio5.tmp = data.frame(mean = seq(bio5.fore.245$mean[1],bio5.fore.245$mean[2],length.out=19),
+                      year = seq(2022,2040))
+bio5.scale = as.numeric(scale(c(bio5$mean,bio5.tmp$mean)))
 bio5$mean.scale = bio5.scale[1:31]
 
 #temp during may (most common nesting month)
 #setwd("~/KRST/Analysis/KRST climate histical")
+
+load("C:/Users/beross/OneDrive - DOI/Documents/KRST/Analysis/SLR Data/slr.krst.data.Rdata")
+slr.cov = rep(NA,length(nest.pro$Year)-1)
+slr.fore.med = subset(slrp.summary, Scenario == "0.5 - MED")
+slr.tmp = data.frame(mean = seq(sl.summary$msl.mean[8],slr.fore.med$msl.mean[1],length.out=19),
+                     year = seq(2022,2040))
+slr.scale = as.numeric(scale(c(sl.summary$msl.mean[2:8],slr.tmp$mean)))
+sl.summary$mean.scale = c(NA,slr.scale[1:7])
 
 may.temp = subset(hist.temp.means,month == 5)
 may.tmax = rep(NA,length(nest.pro$Year)-1)
 for(i in 1:1597){
   may.tmax[i] = may.temp$tmax[which(may.temp$year==(year+1990)[i])]
   bio5.out[i] = bio5$mean.scale[which(bio5$year==(year+1990)[i])]
+  slr.cov[i] = sl.summary$msl.mean[which(sl.summary==(year+1990)[i])]
   }
 may.tmax.ann = as.numeric(scale(may.temp$tmax))
 bio5.ann = bio5$mean.scale
+slr.cov = as.numeric(scale(slr.cov))
 
 #need to assign each 20 year block (21-40, 41-60, etc) to different climate
 #bio5.fore.cov = c(rep(bio5.scale[32],20),rep(bio5.scale[33],20),rep(bio5.scale[34],10))
-bio5.fore.cov = rep(bio5.scale[32],15)
+bio5.fore.cov = bio5.tmp$mean[1:Time.fore]
+slr.cov.fore = slr.tmp$mean[1:Time.fore]
 #100 nests in year T+1
 #E.ind[(year.mean.idx[31]+1):(year.mean.idx[31]+nests.fore)] = round(mean(E.ind))
 #J.ind[(year.mean.idx[31]+1):(year.mean.idx[31]+nests.fore)] = NA
@@ -564,9 +581,6 @@ y.fem[32:(Time+Time.fore)] = NA
 
 #dat.fore = rbind(dat,matrix(0,100,31))
 #dat.fore = cbind(dat.fore,c(rep(0,795),rep(1,100)))
-
-load("C:/Users/beross/OneDrive - DOI/Documents/KRST/Analysis/SLR Data/slr.krst.data.Rdata")
-slr = c(rep(NA,24),as.numeric(scale(sl.summary$msl.mean[-1])))
 
 #need to truncate N.b + N.i to be at least as 
 # large as number of observed individuals. Just
@@ -614,7 +628,9 @@ krst_con <- list(N = nrow(y), Time = ncol(dat),
                  may.tmax.ann = bio5.ann,
                  clim.cov = bio5.out,
                  clim.cov.fore = bio5.fore.cov,
-                 nest.mange.fore = nest.mange.fore)
+                 nest.mange.fore = nest.mange.fore,
+                 slr.cov=slr.cov,
+                 slr.cov.fore = slr.cov.fore)
 
 zinit <- dat
 for (i in 1:nrow(y)) {
@@ -674,6 +690,7 @@ krst_ini = function() list(
   prob.fem = prob.fem.ini,
   n.fem = c(rep(NA,Time),rep(2,Time.fore)),
   y.fem = c(rep(NA,Time),rep(100,Time.fore)),
+  beta.slr = c(rep(NA,5),runif(1,-1,1)),
   f = rep(round(f_ini),(Time+Time.fore)))
 
 krst.model <- nimbleModel(code = krst.ipm,

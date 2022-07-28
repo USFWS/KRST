@@ -115,8 +115,8 @@ legend("topleft",
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
 #### LAMBDA ####
-lam = matrix(NA,150000,(Time+Time.fore-1))
-n.tot = matrix(NA,150000,(Time+Time.fore))
+lam = matrix(NA,30000,(Time+Time.fore-1))
+n.tot = matrix(NA,30000,(Time+Time.fore))
 
 for(t in 1:(Time+Time.fore)){
   n.tot[,t] = rowSums(cbind(out[,t], out[,(2*(Time+Time.fore))+t]))
@@ -127,12 +127,25 @@ for(t in 1:(Time+Time.fore-1)){
 #remove Inf from lam
 lam[!is.finite(lam)] = NA
 
+lam.low.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.025)
+lam.high.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.975)
+
 par(mfrow=c(1,1))
 #vioplot(lam[,-1],ylim=c(0,3),names=seq(1993,(1991+Time+Time.fore)))
-boxplot(lam[,-1],ylab = expression(lambda),
+boxplot(cbind(lam[,2:Time],matrix(NA,30000,(Time.fore-1))),
+        ylab = expression(lambda),
         names = seq(1993,(1990+Time+Time.fore)),outline=FALSE)
+
+polygon(c(seq((Time),(Time+Time.fore-2)), 
+          rev(seq((Time),(Time+Time.fore-2)))),
+        c(lam.low.fore,rev(lam.high.fore)),
+          col="light grey")
+lines(y=apply(lam[,(Time+1):(Time+Time.fore-1)],2,mean),
+      x=seq(Time,(Time+Time.fore-2)),lty=3)
 abline(h=1)
 
+
+#Detection probability
 det.prob = out[,665]
 plot(density(det.prob))
 
@@ -179,13 +192,13 @@ for(j in 1:100){
                                    out[,601]*seq.plot[j])))
   
   plot.high.incu[,j] = 1/(1+exp(-(out[,662]+ 
-                                   out[,603]*seq.plot[j])))
+                                   out[,602]*seq.plot[j])))
   
   plot.high.cor[,j] = 1/(1+exp(-(out[,663]+ 
-                                   out[,604]*seq.plot[j])))
+                                   out[,603]*seq.plot[j])))
   
   plot.insitu[,j] = 1/(1+exp(-(out[,664]+ 
-                                   out[,605]*seq.plot[j])))
+                                   out[,604]*seq.plot[j])))
   }
 
 plot.low.incu2.low = apply(plot.low.incu, 2, function(x) quantile(x, probs = c(0.025)))
@@ -243,21 +256,21 @@ mtext("B) Low Risk, Corral, PAIS", side=3, line=.5, adj=0)
 axis(side=2, labels=FALSE, las=1)
 axis(side=1, labels=FALSE, las=1)
 
-plot(plot.low.cor.spi2,type="l",x=plot.x,col=col.plot[3],lwd=2,ylim=c(0,1),
-     xaxt="n",yaxt="n")
-lines(plot.low.cor.spi2.high,lty=2,x=plot.x,col=col.plot[3],lwd=2)
-lines(plot.low.cor.spi2.low,lty=2,x=plot.x,col=col.plot[3],lwd=2)
-mtext("C) Low Risk, Corral, SPI", side=3, line=.5, adj=0)
-axis(side=1, labels=FALSE, las=1)
-axis(side=2, labels=FALSE, las=1)
-
 plot(plot.high.incu2,type="l",x=plot.x,
      col=col.plot[4],lwd=2,ylim=c(0,1),
      xaxt="n",yaxt="n")
 lines(plot.high.incu2.low,lty=2,x=plot.x,col=col.plot[4],lwd=2)
 lines(plot.high.incu2.high,lty=2,x=plot.x,col=col.plot[4],lwd=2)
-mtext("D) High Risk, Incubator", side=3, line=.5, adj=0)
-axis(side=1, at=NULL, labels=TRUE)
+mtext("D) High Risk, Incubator, PAIS and North", side=3, line=.5, adj=0)
+axis(side=1, at=NULL, labels=FALSE)
+axis(side=2, labels=FALSE, las=1)
+
+plot(plot.low.cor.spi2,type="l",x=plot.x,col=col.plot[3],lwd=2,ylim=c(0,1),
+     xaxt="n",yaxt="n")
+lines(plot.low.cor.spi2.high,lty=2,x=plot.x,col=col.plot[3],lwd=2)
+lines(plot.low.cor.spi2.low,lty=2,x=plot.x,col=col.plot[3],lwd=2)
+mtext("C) Low Risk, Corral, SPI", side=3, line=.5, adj=0)
+axis(side=1, labels=TRUE, las=1)
 axis(side=2, labels=TRUE, las=1)
 
 plot(plot.high.cor2,type="l",x=plot.x,
@@ -265,7 +278,7 @@ plot(plot.high.cor2,type="l",x=plot.x,
      xaxt="n",yaxt="n")
 lines(plot.high.cor2.low,lty=2,x=plot.x,col=col.plot[5],lwd=2)
 lines(plot.high.cor2.high,lty=2,x=plot.x,col=col.plot[5],lwd=2)
-mtext("E) High Risk, Corral", side=3, line=.5, adj=0)
+mtext("E) High Risk, Corral, SPI", side=3, line=.5, adj=0)
 axis(side=1, at=NULL, labels=TRUE)
 axis(side=2, labels=FALSE, las=1)
 
