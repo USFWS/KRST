@@ -474,13 +474,13 @@ nest.loc = as.numeric(nest.loc)
 good.incu = rep(0,1597)
 good.corr.pais = rep(0,1597)
 good.corr.spi = rep(0,1597)
-ngood.incu = rep(0,1597) #intercept in model
+ngood.incu = rep(0,1597)
 ngood.corr = rep(0,1597)
 insitu = rep(0,1597)
 good.incu[cond == 1 & incu == 1] = 1
 good.corr.pais[cond == 1 & incu == 0 & nest.loc == 0] = 1
 good.corr.spi[cond == 1 & incu == 0 & nest.loc == 1] = 1
-ngood.incu[cond == 0 & incu == 1] = 1 #intercept in model
+ngood.incu[cond == 0 & incu == 1] = 1 
 ngood.corr[cond == 0 & incu == 0] = 1
 insitu[incu == 2] = 1
 
