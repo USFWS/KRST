@@ -129,6 +129,7 @@ lam[!is.finite(lam)] = NA
 
 lam.low.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.025)
 lam.high.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.975)
+lam.med.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.5)
 
 par(mfrow=c(1,1))
 #vioplot(lam[,-1],ylim=c(0,3),names=seq(1993,(1991+Time+Time.fore)))
@@ -140,8 +141,8 @@ polygon(c(seq((Time),(Time+Time.fore-2)),
           rev(seq((Time),(Time+Time.fore-2)))),
         c(lam.low.fore,rev(lam.high.fore)),
           col="light grey")
-lines(y=apply(lam[,(Time+1):(Time+Time.fore-1)],2,mean),
-      x=seq(Time,(Time+Time.fore-2)),lty=3)
+lines(y=lam.med.fore,
+      x=seq(Time,(Time+Time.fore-2)),lty=3,lwd=2)
 abline(h=1)
 
 

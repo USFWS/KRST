@@ -749,7 +749,7 @@ out <- clusterEvalQ(clus, {
                               project = model)
   #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
   #return(as.mcmc(out1))
-  CmodelMCMC$run(1000,reset=TRUE, resetMV=TRUE)
+  CmodelMCMC$run(50000,reset=TRUE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
