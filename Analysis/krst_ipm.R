@@ -388,10 +388,7 @@ krst.ipm <- nimbleCode({
   }
   
   for(t in 1:(Time+Time.fore)){
-    Ntot[t] <- N.p1[t] + N.p2[t] + N.p3[t] +
-      N.p4[t] + N.p5[t] + N.p6[t] + N.p7[t] + 
-      N.p8[t] + N.p9[t] + N.p10[t] +
-      N.b[t] + N.nb[t] + N.i[t]
+    Ntot[t] <- N.b[t] + N.nb[t]
   }
   
   #number of females seen as count data
@@ -428,7 +425,7 @@ fem.dat = read.csv("hatch_sexes.csv")
 
 #forecasting
 Time = dim(dat)[2]
-Time.fore = 15
+Time.fore = 45
 
 prob.fem = c(fem.dat$prob_fem[-c(1:4)]/100,rep(NA,8))
 prob.fem[(Time+Time.fore)] = NA
@@ -528,7 +525,7 @@ bioc.forecast = read.csv("~/KRST/Analysis/CMIP6_BIOC/CMIP6_BIOC/bioc_means_all.c
 
 bio5 = subset(hist.bioc.means,bioc == "bio5")
 bio5.out = rep(NA,length(nest.pro$Year)-1)
-bio5.fore.245 = subset(bioc.forecast,bioc == "bio5" & ssp == 245)
+bio5.fore.245 = subset(bioc.forecast,bioc == "bio5" & ssp == 585)
 bio5.tmp = data.frame(mean = seq(bio5.fore.245$mean[1],bio5.fore.245$mean[2],length.out=19),
                       year = seq(2022,2040))
 bio5.scale = as.numeric(scale(c(bio5$mean,bio5.tmp$mean)))
@@ -618,19 +615,22 @@ krst_data <- list(y = y, y.fem = y.fem,
                   E.ind = E.ind,
                   E.ind.fore = 96)
 
+bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means, clim.var = "bio5", ssp = 245, slrp.summary=slrp.summary, sl.summary = sl.summary, slr.scenario = slr.scenario)
+
+
 krst_con <- list(N = nrow(y), Time = ncol(dat), 
                  first=first,
-                 Time.fore = Time.fore,
+                 Time.fore = 45,
                  nest.mange = nest.mange,
                  year = year,
                  year.mean.idx = year.mean.idx,
                  N.nest = length(J.ind),
-                 may.tmax.ann = bio5.ann,
-                 clim.cov = bio5.out,
-                 clim.cov.fore = bio5.fore.cov,
+                 may.tmax.ann = bio5.245.5$bio5.ann,
+                 clim.cov = bio5.245.5$bio5.out,
+                 clim.cov.fore = bio5.245.5$bio5.fore.cov,
                  nest.mange.fore = nest.mange.fore,
-                 slr.cov=slr.cov,
-                 slr.cov.fore = slr.cov.fore)
+                 slr.cov=bio5.245.5$slr.cov,
+                 slr.cov.fore = bio5.245.5$slr.cov.fore)
 
 zinit <- dat
 for (i in 1:nrow(y)) {
@@ -700,7 +700,7 @@ krst.model <- nimbleModel(code = krst.ipm,
 
 krst.config.mcmc <- configureMCMC(krst.model)
 
-krst.config.mcmc$addMonitors("f","prob.egg.fore")
+krst.config.mcmc$addMonitors("f")
 
 krst.mcmc <- buildMCMC(krst.config.mcmc)
 

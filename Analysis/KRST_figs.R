@@ -10,7 +10,7 @@ out = as.mcmc(rbind(out.up[[1]], out.up[[2]], out.up[[3]]))
 col.plot=viridis(5,alpha=.6)
 
 Time = 31
-Time.fore = 15
+Time.fore = 45
 plot.year = 1990+Time+Time.fore
 
 ## Figure for abundance
@@ -117,32 +117,44 @@ legend("topleft",
 #### LAMBDA ####
 lam = matrix(NA,30000,(Time+Time.fore-1))
 n.tot = matrix(NA,30000,(Time+Time.fore))
-
+lam.b = matrix(NA,30000,(Time+Time.fore-1))
 for(t in 1:(Time+Time.fore)){
   n.tot[,t] = rowSums(cbind(out[,t], out[,(2*(Time+Time.fore))+t]))
 }
 for(t in 1:(Time+Time.fore-1)){ 
-  lam[,t] = n.tot[,t+1]/n.tot[,t]
+  #lam[,t] = n.tot[,t+1]/n.tot[,t]
+  lam.b[,t] = out[,t+1]/out[,t]
 }
 #remove Inf from lam
 lam[!is.finite(lam)] = NA
 
-lam.low.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.025)
-lam.high.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.975)
-lam.med.fore = apply(lam[,(Time+1):(Time+Time.fore-1)],2,quantile,0.5)
+lam.low = apply(lam[,1:(Time-1)],2,quantile,0.025,na.rm=TRUE)
+lam.high = apply(lam[,1:(Time-1)],2,quantile,0.975,na.rm=TRUE)
+lam.low.fore = apply(lam[,(Time):(Time+Time.fore-1)],2,quantile,0.025)
+lam.high.fore = apply(lam[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
+lam.med.all = apply(lam[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 
 par(mfrow=c(1,1))
 #vioplot(lam[,-1],ylim=c(0,3),names=seq(1993,(1991+Time+Time.fore)))
-boxplot(cbind(lam[,2:Time],matrix(NA,30000,(Time.fore-1))),
+boxplot(cbind(lam[,1:(Time-1)],matrix(NA,30000,(Time.fore-1))),
         ylab = expression(lambda),
-        names = seq(1993,(1990+Time+Time.fore)),outline=FALSE)
+        names = seq(1992,(1990+Time+Time.fore-1)),outline=FALSE)
 
-polygon(c(seq((Time),(Time+Time.fore-2)), 
-          rev(seq((Time),(Time+Time.fore-2)))),
+#plot(y=lam.med.all, x=seq(1992,(1991+Time+Time.fore-1)),
+#     type="l",ylim=c(min(lam.low),max(lam.high)),
+#     lty=2,lwd=3,ylab=expression(lambda),
+#     xlab="Year")
+polygon(c(seq(1992,(1991+Time-1)), 
+          rev(seq(1992,(1991+Time-1)))),
+        c(lam.low,rev(lam.high)),
+        col=col.plot[1])
+
+polygon(c(seq(Time,(Time+Time.fore-1)), 
+          rev(seq(Time,(Time+Time.fore-1)))),
         c(lam.low.fore,rev(lam.high.fore)),
-          col="light grey")
-lines(y=lam.med.fore,
-      x=seq(Time,(Time+Time.fore-2)),lty=3,lwd=2)
+          col=col.plot[2])
+lines(y=lam.med.all[Time:(Time+Time.fore-1)],
+      x=seq(Time,(Time+Time.fore-1)),lty=3,lwd=2)
 abline(h=1)
 
 

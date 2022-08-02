@@ -4,7 +4,7 @@ krst.scenario <- function(Time, Time.fore,
                           clim.var, ssp,slrp.summary,
                           sl.summary,slr.scenario,
                           nest.mange.fore,krst.ipm,
-                          params,nburnin1,nsamp2){
+                          params){
   
 
 prob.fem = krst_data$prob.fem
@@ -89,7 +89,7 @@ krst_data <- list(y = krst_data$y,
                   E.ind = krst_data$E.ind,
                   E.ind.fore = 96)
 
-krst_con <- list(N = nrow(y), Time = Time, 
+krst_con2 <- list(N = nrow(y), Time = Time, 
                  first=krst_con$first,
                  Time.fore = Time.fore,
                  nest.mange = krst_con$nest.mange,
@@ -121,50 +121,70 @@ prob.fem.ini = prob.fem
 prob.fem.ini[which(is.na(prob.fem.ini))] = runif(length(which(is.na(prob.fem.ini))),0.1,0.9)
 prob.fem.ini[which(!is.na(prob.fem))] = NA
 
-krst_ini = function() list(
-  psiNBB=runif(1,0,.5),
-  psiBNB=runif(1,0.5,1),
-  pB=runif(1,0,1), 
-  z=zinit,
-  s.p1 = runif(1,.1,.4), 
-  N.nb = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#krst_ini = function() list(
+#  psiNBB=runif(1,0,.5),
+#  psiBNB=runif(1,0.5,1),
+#  pB=runif(1,0,1), 
+#  z=zinit,
+#  s.p1 = runif(1,.1,.4), 
+#  N.nb = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
   #N.b = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
-  N.b = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p1 = rpois((Time+Time.fore),seq(10,200,length.out=(Time+Time.fore))),
-  N.p2 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p3 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p4 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p5 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p6 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p7 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p8 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p9 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p10 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  #N.i = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
-  N.i = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  r = runif(1,.8,1.2),
-  ln.mean.fem = runif(1,-1,1),
-  mu.n.fem=2,
-  sd.n.fem = runif(1,.1,1),
-  mu.phi = runif(1,1,2.2),
-  sd.phi2=runif(1,.1,1),
-  mu.egg = runif(1,-1,1),
-  nest.cov = c(runif(5,-1,1),NA),
-  insitu.surv = runif(1,.1,.8),
-  mu.temp = runif(1,-1,1),
-  var.temp = runif(1,.1,3),
-  beta.temp.all = runif(1,-1,1),
-  beta.temp = runif(6,-1,1),
-  mu.imm = runif(1,-1,1),
-  sd.imm = runif(1,.01,1),
-  ln.mu.phi = runif((Time+Time.fore-1),1,2.2),
-  eps.imm.tmp = runif((Time+Time.fore),-1,1),
-  J.ind = round(J.ini),
-  prob.fem = prob.fem.ini,
-  n.fem = c(rep(NA,Time),rep(2,Time.fore)),
-  y.fem = c(rep(NA,Time),rep(100,Time.fore)),
-  beta.slr = c(rep(NA,5),runif(1,-1,1)),
-  f = rep(76,(Time+Time.fore)))
+#  N.b = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  N.p1 = rpois((Time+Time.fore),seq(10,200,length.out=(Time+Time.fore))),
+#  N.p2 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  N.p3 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
+#  N.p4 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
+#  N.p5 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
+#  N.p6 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
+#  N.p7 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  N.p8 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  N.p9 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  N.p10 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  #N.i = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
+#  N.i = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+#  r = runif(1,.8,1.2),
+#  ln.mean.fem = runif(1,-1,1),
+#  mu.n.fem=2,
+#  sd.n.fem = runif(1,.1,1),
+#  mu.phi = runif(1,1,2.2),
+#  sd.phi2=runif(1,.1,1),
+#  mu.egg = runif(1,-1,1),
+#  nest.cov = c(runif(5,-1,1),NA),
+#  insitu.surv = runif(1,.1,.8),
+#  mu.temp = runif(1,-1,1),
+#  var.temp = runif(1,.1,3),
+#  beta.temp.all = runif(1,-1,1),
+#  beta.temp = runif(6,-1,1),
+#  mu.imm = runif(1,-1,1),
+#  sd.imm = runif(1,.01,1),
+#  ln.mu.phi = runif((Time+Time.fore-1),1,2.2),
+#  eps.imm.tmp = runif((Time+Time.fore),-1,1),
+#  J.ind = round(J.ini),
+#  prob.fem = prob.fem.ini,
+#  n.fem = c(rep(NA,Time),rep(2,Time.fore)),
+#  y.fem = c(rep(NA,Time),rep(100,Time.fore)),
+#  beta.slr = c(rep(NA,5),runif(1,-1,1)),
+#  f = rep(76,(Time+Time.fore)))
+
+#krst.model <- nimbleModel(code = krst.ipm,
+#                          constants = krst_con,
+#                          data = krst_data,
+#                          inits = krst_ini())
+
+#krst.config.mcmc <- configureMCMC(krst.model)
+
+#krst.config.mcmc$addMonitors("f","prob.egg.fore")
+
+#krst.mcmc <- buildMCMC(krst.config.mcmc)
+
+#krst.cmodel <- compileNimble(krst.model)
+
+#krst.cmcmc <- compileNimble(krst.mcmc, project = krst.model)
+
+#krst.samples <- runMCMC(krst.cmcmc, niter= 110000, 
+#                        nburnin = 100000,nchains = 3,
+#                        samplesAsCodaMCMC = TRUE)
+
 
 nc = 3 #num of chains
 clus = makeCluster(nc)
@@ -174,8 +194,9 @@ clus = makeCluster(nc)
 
 clusterExport(clus, c("krst.ipm","krst_ini",
                       "krst_data",
-                      "krst_con","params"))#,"nburnin1",
-                      #"nsamp2"))
+                      "krst_con2","params"),
+              envir = environment())
+                      
 
 for(j in seq_along(clus)){
   set.seed(j)
@@ -188,7 +209,7 @@ out <- clusterEvalQ(clus, {
   library(coda)
   model <- nimbleModel(code = krst.ipm, 
                        name = "krst.ipm",
-                       constants = krst_con,
+                       constants = krst_con2,
                        data = krst_data, 
                        inits = init)
   Cmodel <- compileNimble(model)
@@ -197,17 +218,18 @@ out <- clusterEvalQ(clus, {
   modelMCMC <- buildMCMC(modelConf)
   CmodelMCMC <- compileNimble(modelMCMC, 
                               project = model)
-  CmodelMCMC$run(100000,reset=TRUE, resetMV=TRUE)
+  CmodelMCMC$run(2500,reset=TRUE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
 #out.mcmc <- as.mcmc.list(out) 
 
 out2 <- clusterEvalQ(clus,{
-  CmodelMCMC$run(10000, reset=FALSE, resetMV=TRUE)
+  CmodelMCMC$run(5000, reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
+stopCluster(clus)
 out.up <- as.mcmc.list(out2)
 
  return(out.up = out.up)
