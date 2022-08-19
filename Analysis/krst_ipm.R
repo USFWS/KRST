@@ -657,11 +657,11 @@ prob.fem.ini[which(is.na(prob.fem.ini))] = runif(length(which(is.na(prob.fem.ini
 prob.fem.ini[which(!is.na(prob.fem))] = NA
 
 krst_ini = function() list(
-  psiNBB=.3,
-  psiBNB=.8,
-  pB=runif(1,0,1), 
+  psiNBB= runif(1,.1,.5),
+  psiBNB= runif(1,.5,.9),
+  pB=runif(1,0.1,0.9), 
   z=zinit,
-  s.p1 = .3, 
+  s.p1 = runif(1,.1,.5), 
   N.nb = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
   #N.b = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
   N.b = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
@@ -677,7 +677,7 @@ krst_ini = function() list(
   N.p10 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
   #N.i = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
   N.i = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  r = runif(1,.8,1.2),
+  r = runif(1,.8,10),
   ln.mean.fem = runif(1,-1,1),
   mu.n.fem=2,
   sd.n.fem = runif(1,.1,1),
@@ -697,7 +697,7 @@ krst_ini = function() list(
   J.ind = round(J.ini),
   prob.fem = prob.fem.ini,
   n.fem = c(rep(NA,Time),rep(2,Time.fore)),
-  y.fem = c(rep(NA,Time),rep(100,Time.fore)),
+  y.fem = c(rep(NA,Time),rep(150,Time.fore)),
   beta.slr = c(rep(NA,5),runif(1,-1,1)),
   f = rep(round(f_ini),(Time+Time.fore)))
 
@@ -757,14 +757,14 @@ out <- clusterEvalQ(clus, {
                               project = model)
   #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
   #return(as.mcmc(out1))
-  CmodelMCMC$run(100000,reset=TRUE, resetMV=TRUE)
+  CmodelMCMC$run(10000,reset=TRUE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
 out.mcmc <- as.mcmc.list(out) 
 
 out2 <- clusterEvalQ(clus,{
-  CmodelMCMC$run(100000,thin=10, reset=FALSE, resetMV=TRUE)
+  CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
