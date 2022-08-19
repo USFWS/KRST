@@ -525,8 +525,8 @@ bioc.forecast = read.csv("~/KRST/Analysis/CMIP6_BIOC/CMIP6_BIOC/bioc_means_all.c
 
 bio5 = subset(hist.bioc.means,bioc == "bio5")
 bio5.out = rep(NA,length(nest.pro$Year)-1)
-bio5.fore.245 = subset(bioc.forecast,bioc == "bio5" & ssp == 585)
-bio5.tmp = data.frame(mean = seq(bio5.fore.245$mean[1],bio5.fore.245$mean[2],length.out=19),
+bio5.fore.585 = subset(bioc.forecast,bioc == "bio5" & ssp == 585)
+bio5.tmp = data.frame(mean = seq(bio5.fore.585$mean[1],bio5.fore.585$mean[2],length.out=19),
                       year = seq(2022,2040))
 bio5.scale = as.numeric(scale(c(bio5$mean,bio5.tmp$mean)))
 bio5$mean.scale = bio5.scale[1:31]
@@ -615,7 +615,15 @@ krst_data <- list(y = y, y.fem = y.fem,
                   E.ind = E.ind,
                   E.ind.fore = 96)
 
-bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means, clim.var = "bio5", ssp = 245, slrp.summary=slrp.summary, sl.summary = sl.summary, slr.scenario = slr.scenario)
+source("~/KRST/Analysis/make_fore_dat.R", echo=TRUE)
+slr.scenario = "2.0 - MED"
+nest.mange.fore = c(40,19,24,15,1,1) #low,incu; low,cor,PAIS; low,cor,SPI; high,incu; high,cor; insitu
+bio5.585.2 = make.fore.dat(hist.bioc.means = hist.bioc.means, 
+                           clim.var = "bio5", 
+                           ssp = 585, 
+                           slrp.summary=slrp.summary, 
+                           sl.summary = sl.summary, 
+                           slr.scenario = slr.scenario)
 
 
 krst_con <- list(N = nrow(y), Time = ncol(dat), 
@@ -625,12 +633,12 @@ krst_con <- list(N = nrow(y), Time = ncol(dat),
                  year = year,
                  year.mean.idx = year.mean.idx,
                  N.nest = length(J.ind),
-                 may.tmax.ann = bio5.245.5$bio5.ann,
-                 clim.cov = bio5.245.5$bio5.out,
-                 clim.cov.fore = bio5.245.5$bio5.fore.cov,
+                 may.tmax.ann = bio5.585.2$bio5.ann,
+                 clim.cov = bio5.585.2$bio5.out,
+                 clim.cov.fore = bio5.585.2$bio5.fore.cov,
                  nest.mange.fore = nest.mange.fore,
-                 slr.cov=bio5.245.5$slr.cov,
-                 slr.cov.fore = bio5.245.5$slr.cov.fore)
+                 slr.cov=bio5.585.2$slr.cov,
+                 slr.cov.fore = bio5.585.2$slr.cov.fore)
 
 zinit <- dat
 for (i in 1:nrow(y)) {
@@ -649,11 +657,11 @@ prob.fem.ini[which(is.na(prob.fem.ini))] = runif(length(which(is.na(prob.fem.ini
 prob.fem.ini[which(!is.na(prob.fem))] = NA
 
 krst_ini = function() list(
-  psiNBB=runif(1,0,.5),
-  psiBNB=runif(1,0.5,1),
+  psiNBB=.3,
+  psiBNB=.8,
   pB=runif(1,0,1), 
   z=zinit,
-  s.p1 = runif(1,.1,.4), 
+  s.p1 = .3, 
   N.nb = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
   #N.b = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
   N.b = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
@@ -749,14 +757,14 @@ out <- clusterEvalQ(clus, {
                               project = model)
   #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
   #return(as.mcmc(out1))
-  CmodelMCMC$run(50000,reset=TRUE, resetMV=TRUE)
+  CmodelMCMC$run(100000,reset=TRUE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
 out.mcmc <- as.mcmc.list(out) 
 
 out2 <- clusterEvalQ(clus,{
-  CmodelMCMC$run(10000, reset=FALSE, resetMV=TRUE)
+  CmodelMCMC$run(100000,thin=10, reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
