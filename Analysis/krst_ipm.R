@@ -134,6 +134,9 @@ dat = dat[-(which(apply(dat,1,sum)==0)),] #remove individuals that were renumber
 tx_nest_dat = read.csv("tx_nest_hatch_data.csv")
 colnames(tx_nest_dat)[1] = "year"
 
+#nest searching effort
+nest.effort = read_xlsx("patrol effort data_NPI_1986 to 2021.xlsx",sheet = 1, col_names = TRUE)
+kilo.patrol = nest.effort$`Kilometers patrolled`[nest.effort$Year>1990]
 #nest protection data
 #hatch success = prob of hatching
 #emerge success = prob of being released
@@ -170,7 +173,7 @@ krst.ipm <- nimbleCode({
 
   psiBNB ~ dbeta(psiBNB.mom[1], psiBNB.mom[2]) #transition of Breeders to NonBreeders
   psiNBB ~ dbeta(psiNBB.mom[1], psiNBB.mom[2]) #transition of NB to B
-  pB ~ dbeta(p.mom[1], p.mom[2]) #det of breeders
+  #pB ~ dbeta(p.mom[1], p.mom[2]) #det of breeders
   
   #priors pre breeding survival
   #s.p1 ~ dbeta(1,1) #same table 3, hatch & 1yr surv
@@ -369,8 +372,6 @@ krst.ipm <- nimbleCode({
       (N.nb[t-1] * phi[t-1] * psiNBB) +
       (N.b[t-1] * phi[t-1] * (1-psiBNB)))
                        
-    #N.p1[t] ~ T(dpois(pre.br1[t]),0,100000)
-    #N.p2[t] ~ T(dpois(pre.br2[t]),0,75000)
     N.p1[t] ~ dpois(pre.br1[t])
     N.p2[t] ~ dpois(pre.br2[t])
     N.p3[t] ~ dpois(pre.br3[t])
