@@ -174,6 +174,13 @@ krst.ipm <- nimbleCode({
   psiBNB ~ dbeta(psiBNB.mom[1], psiBNB.mom[2]) #transition of Breeders to NonBreeders
   psiNBB ~ dbeta(psiNBB.mom[1], psiNBB.mom[2]) #transition of NB to B
   #pB ~ dbeta(p.mom[1], p.mom[2]) #det of breeders
+  a.0 ~ dnorm(0,sd = 1)
+  a.k ~ dnorm(0,sd = 1)
+  
+  #model for detection probability by kilo searched
+  for(t in 1:(Time+Time.fore)){
+  logit(pB[t]) <- a.0 + a.k*kilo.patrol[t]
+  }
   
   #priors pre breeding survival
   #s.p1 ~ dbeta(1,1) #same table 3, hatch & 1yr surv
@@ -207,18 +214,19 @@ krst.ipm <- nimbleCode({
   gamma[3,1,t] <- 0
   gamma[3,2,t] <- 0
   gamma[3,3,t] <- 1
-  }
+  #}
   
   #probabilities of y(t) given z(t)
-  omega[1,1] <- 1-pB #pr(alive B t -> non-detected)
-  omega[1,2] <- pB #pr(alive B -> detected B t)
+  omega[1,1,t] <- 1-pB[t] #pr(alive B t -> non-detected)
+  omega[1,2,t] <- pB[t] #pr(alive B -> detected B t)
   
-  omega[2,1] <- 1 #pr(alive NB -> non-detected)
-  omega[2,2] <- 0 #pr(alive NB -> detected)
+  omega[2,1,t] <- 1 #pr(alive NB -> non-detected)
+  omega[2,2,t] <- 0 #pr(alive NB -> detected)
   
-  omega[3,1] <- 1 #pr(dead t -> nondetected)
-  omega[3,2] <- 0 #pr(dead t -> detected)
-
+  omega[3,1,t] <- 1 #pr(dead t -> nondetected)
+  omega[3,2,t] <- 0 #pr(dead t -> detected)
+  }
+  
   ##
   #####HMM for adult survival and breeding probability####
   ##
@@ -233,7 +241,7 @@ krst.ipm <- nimbleCode({
       #z(t) given z(t-1)
       z[i,t] ~ dcat(gamma[z[i,t-1],1:3,t-1])
       #y(t) given z(t)
-      y[i,t] ~ dcat(omega[z[i,t],1:2])
+      y[i,t] ~ dcat(omega[z[i,t],1:2,t])
     }
   }
 
@@ -626,6 +634,9 @@ bio5.585.2 = make.fore.dat(hist.bioc.means = hist.bioc.means,
                            sl.summary = sl.summary, 
                            slr.scenario = slr.scenario)
 
+#future patrol effort
+k.scale = as.numeric(scale(kilo.patrol))
+kilo.patrol.fore = c(k.scale,rep(k.scale[31],Time.fore))
 
 krst_con <- list(N = nrow(y), Time = ncol(dat), 
                  first=first,
@@ -634,6 +645,7 @@ krst_con <- list(N = nrow(y), Time = ncol(dat),
                  year = year,
                  year.mean.idx = year.mean.idx,
                  N.nest = length(J.ind),
+                 kilo.patrol = kilo.patrol.fore,
                  may.tmax.ann = bio5.585.2$bio5.ann,
                  clim.cov = bio5.585.2$bio5.out,
                  clim.cov.fore = bio5.585.2$bio5.fore.cov,
@@ -700,6 +712,8 @@ krst_ini = function() list(
   n.fem = c(rep(NA,Time),rep(2,Time.fore)),
   y.fem = c(rep(NA,Time),rep(150,Time.fore)),
   beta.slr = c(rep(NA,5),runif(1,-1,1)),
+  a.0 = runif(1,-1,1),
+  a.k = runif(1,-1,1),
   f = rep(round(f_ini),(Time+Time.fore)))
 
 krst.model <- nimbleModel(code = krst.ipm,
@@ -748,7 +762,7 @@ out <- clusterEvalQ(clus, {
   Cmodel <- compileNimble(model)
   modelConf <- configureMCMC(model)
   #modelConf$addMonitors(params)
-  modelConf$addMonitors(c("phi","N.i","N.b","beta.temp.all","f"))
+  modelConf$addMonitors(c("phi","N.i","N.b","beta.temp.all","f","prob.fem"))
   #configureRJ(modelConf,
   #            targetNodes = 'beta',
   #            indicatorNodes = 'indA',
