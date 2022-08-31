@@ -151,6 +151,7 @@ p.mom <- beta.mom(.8,.2) #detection prob is high
 s.p.mom <- beta.mom(.43,.1)
 s.p.mom2 <- beta.mom(.5,.1)
 in.s <- beta.mom(.63,.1)
+prob.fem.mom <- beta.mom(.73,.1)
 
 krst.ipm <- nimbleCode({
   
@@ -169,18 +170,19 @@ krst.ipm <- nimbleCode({
     ln.mu.phi[t] ~ dnorm(mu.phi,var=sd.phi2)
   }
   mu.phi ~ dnorm(2.2, sd = 1)
-  sd.phi2 ~ dinvgamma(1,1)
+  sd.phi2 ~ dinvgamma(2,1)
 
   psiBNB ~ dbeta(psiBNB.mom[1], psiBNB.mom[2]) #transition of Breeders to NonBreeders
   psiNBB ~ dbeta(psiNBB.mom[1], psiNBB.mom[2]) #transition of NB to B
-  #pB ~ dbeta(p.mom[1], p.mom[2]) #det of breeders
-  a.0 ~ dnorm(0,sd = 1)
-  a.k ~ dnorm(0,sd = 1)
+  pB ~ dbeta(p.mom[1], p.mom[2]) #det of breeders
+  #a.0 ~ dnorm(0,sd = 1)
+  #a.k ~ dnorm(0,sd = 1)
   
   #model for detection probability by kilo searched
-  for(t in 1:(Time+Time.fore)){
-  logit(pB[t]) <- a.0 + a.k*kilo.patrol[t]
-  }
+  #for(t in 1:(Time+Time.fore-1)){
+  #logit(pB[t]) <- a.0 + a.k*kilo.patrol[t]
+  #}
+  
   
   #priors pre breeding survival
   #s.p1 ~ dbeta(1,1) #same table 3, hatch & 1yr surv
@@ -214,24 +216,22 @@ krst.ipm <- nimbleCode({
   gamma[3,1,t] <- 0
   gamma[3,2,t] <- 0
   gamma[3,3,t] <- 1
-  #}
+  }
   
   #probabilities of y(t) given z(t)
-  omega[1,1,t] <- 1-pB[t] #pr(alive B t -> non-detected)
-  omega[1,2,t] <- pB[t] #pr(alive B -> detected B t)
+  omega[1,1] <- 1-pB #pr(alive B t -> non-detected)
+  omega[1,2] <- pB #pr(alive B -> detected B t)
   
-  omega[2,1,t] <- 1 #pr(alive NB -> non-detected)
-  omega[2,2,t] <- 0 #pr(alive NB -> detected)
+  omega[2,1] <- 1 #pr(alive NB -> non-detected)
+  omega[2,2] <- 0 #pr(alive NB -> detected)
   
-  omega[3,1,t] <- 1 #pr(dead t -> nondetected)
-  omega[3,2,t] <- 0 #pr(dead t -> detected)
-  }
+  omega[3,1] <- 1 #pr(dead t -> nondetected)
+  omega[3,2] <- 0 #pr(dead t -> detected)
+  #}
   
   ##
   #####HMM for adult survival and breeding probability####
   ##
-  
-  #Need to fix "dynamic index out of bounds" warning??
   
   for(i in 1:N){
     #latent state at first capture
@@ -241,7 +241,7 @@ krst.ipm <- nimbleCode({
       #z(t) given z(t-1)
       z[i,t] ~ dcat(gamma[z[i,t-1],1:3,t-1])
       #y(t) given z(t)
-      y[i,t] ~ dcat(omega[z[i,t],1:2,t])
+      y[i,t] ~ dcat(omega[z[i,t],1:2])
     }
   }
 
@@ -320,13 +320,15 @@ krst.ipm <- nimbleCode({
   for(t in 1:Time+Time.fore){
     prob.fem[t] ~ dbeta(r*mu.fem[t], r*(1-mu.fem[t])) #Data from Shaver & Calliway
     logit(mu.fem[t]) <- ln.mean.fem
+    #prob.fem[t] ~ dbeta(prob.fem.mom[1],prob.fem.mom[2])
   }
   
   ln.mean.fem ~ dnorm(0,sd=10) #prior, mean prob
   mean.fem <- exp(ln.mean.fem)/(1+exp(ln.mean.fem))
   r ~ dgamma(.1,.1) #overdispersion param for beta dist'n
+  #mean.fem <- mean(prob.fem[])
   
-  #state space model for abundance/pop matrix
+  #### state space model for abundance/pop matrix ####
   
   pre.br1[1] <- N.p1[1]
   pre.br2[1] <- N.p2[1]
@@ -340,39 +342,40 @@ krst.ipm <- nimbleCode({
   pre.br10[1] <- N.p10[1]
   no.breed[1] <- N.nb[1]
   breed[1] <- N.b[1]
-  imm[1] <- 1
-  N.i[1] <- 1
+  imm[1] <- 2
+  N.i[1] <- 2
   mu.imm ~ dnorm(0, sd = 2)
   sd.imm ~ dinvgamma(1,1)
   
   for(t in 1:(Time+Time.fore)){
     eps.imm.tmp[t] ~ dnorm(mu.imm, var=sd.imm)
-    eps.imm[t] <- min(eps.imm.tmp[t],8)
+    #eps.imm[t] <- min(eps.imm.tmp[t],10)
+    eps.imm[t] <- eps.imm.tmp[t]
   }
   
   for(t in 2:(Time+Time.fore)){
     
     #s.p1 is transition probability * survival
-    pre.br1[t] <- f[t-1] * mean.fem * N.b[t-1] * s.p1 * mu.n.fem + 
-      (N.p1[t-1]*(1-s.p1))
-    pre.br2[t] <- N.p1[t-1]*s.p1 +
-      N.p2[t-1]*(1-s.p1) 
-    pre.br3[t] <- N.p2[t-1]*s.p1 +
-      N.p3[t-1]*(1-s.p1)
-    pre.br4[t] <- N.p3[t-1]*s.p1 +
-      N.p4[t-1]*(1-s.p1)
-    pre.br5[t] <- N.p4[t-1]*s.p1 +
-      N.p5[t-1]*(1-s.p1)
-    pre.br6[t] <- N.p5[t-1]*s.p1 +
-      N.p6[t-1]*(1-s.p1)
-    pre.br7[t] <- N.p6[t-1]*s.p1 +
-      N.p7[t-1]*(1-s.p1)
-    pre.br8[t] <- N.p7[t-1]*s.p1 +
-      N.p8[t-1]*(1-s.p1)
-    pre.br9[t] <- N.p8[t-1]*s.p1 +
-      N.p9[t-1]*(1-s.p1)
-    pre.br10[t] <- N.p9[t-1]*s.p1 +
-      N.p10[t-1]*(1-s.p1)
+    pre.br1[t] <- f[t-1] * mean.fem * N.b[t-1] * s.p1 * mu.n.fem #+ 
+      #(N.p1[t-1]*(1-s.p1))
+    #pre.br2[t] <- N.p1[t-1]*s.p1 #+
+      #N.p2[t-1]*(1-s.p1) 
+    #pre.br3[t] <- N.p2[t-1]*s.p1 #+
+      #N.p3[t-1]*(1-s.p1)
+    #pre.br4[t] <- N.p3[t-1]*s.p1 #+
+      #N.p4[t-1]*(1-s.p1)
+    #pre.br5[t] <- N.p4[t-1]*s.p1 #+
+      #N.p5[t-1]*(1-s.p1)
+    #pre.br6[t] <- N.p5[t-1]*s.p1 #+
+      #N.p6[t-1]*(1-s.p1)
+    #pre.br7[t] <- N.p6[t-1]*s.p1 #+
+      #N.p7[t-1]*(1-s.p1)
+    #pre.br8[t] <- N.p7[t-1]*s.p1 #+
+      #N.p8[t-1]*(1-s.p1)
+    #pre.br9[t] <- N.p8[t-1]*s.p1 #+
+      #N.p9[t-1]*(1-s.p1)
+    #pre.br10[t] <- N.p9[t-1]*s.p1 #+
+      #N.p10[t-1]*(1-s.p1)
     
     no.breed[t] <- max(1,(N.nb[t-1] * phi[t-1] * (1-psiNBB)) + 
       (N.b[t-1] * phi[t-1] * psiBNB))
@@ -381,15 +384,24 @@ krst.ipm <- nimbleCode({
       (N.b[t-1] * phi[t-1] * (1-psiBNB)))
                        
     N.p1[t] ~ dpois(pre.br1[t])
-    N.p2[t] ~ dpois(pre.br2[t])
-    N.p3[t] ~ dpois(pre.br3[t])
-    N.p4[t] ~ dpois(pre.br4[t])
-    N.p5[t] ~ dpois(pre.br5[t])
-    N.p6[t] ~ dpois(pre.br6[t])
-    N.p7[t] ~ dpois(pre.br7[t])
-    N.p8[t] ~ dpois(pre.br8[t])
-    N.p9[t] ~ dpois(pre.br9[t])
-    N.p10[t] ~ dpois(pre.br10[t])
+    #N.p2[t] ~ dpois(s.p1*N.p1[t-1])
+    N.p2[t] ~ dbinom(s.p1,N.p1[t-1])
+    #N.p3[t] ~ dpois(N.p2[t-1]*s.p1)
+    N.p3[t] ~ dbinom(s.p1,N.p2[t-1])
+    #N.p4[t] ~ dpois(N.p3[t-1]*s.p1)
+    N.p4[t] ~ dbinom(s.p1,N.p3[t-1])
+    #N.p5[t] ~ dpois(N.p4[t-1]*s.p1)
+    N.p5[t] ~ dbinom(s.p1,N.p4[t-1])
+    #N.p6[t] ~ dpois(N.p5[t-1]*s.p1)
+    N.p6[t] ~ dbinom(s.p1,N.p5[t-1])
+    #N.p7[t] ~ dpois(N.p6[t-1]*s.p1)
+    N.p7[t] ~ dbinom(s.p1,N.p6[t-1])
+    #N.p8[t] ~ dpois(N.p7[t-1]*s.p1)
+    N.p8[t] ~ dbinom(s.p1,N.p7[t-1])
+    #N.p9[t] ~ dpois(N.p8[t-1]*s.p1)
+    N.p9[t] ~ dbinom(s.p1,N.p8[t-1])
+    #N.p10[t] ~ dpois(N.p9[t-1]*s.p1)
+    N.p10[t] ~ dbinom(s.p1,N.p9[t-1])
     N.nb[t] ~ dpois(no.breed[t])
     N.b[t] ~ dpois(breed[t])
     log(imm[t]) <- eps.imm[t]
@@ -402,7 +414,7 @@ krst.ipm <- nimbleCode({
   
   #number of females seen as count data
 
-  for(t in 1:(Time+Time.fore)){
+  for(t in 1:Time){
     #tried to constrain distribution in some way
     # to ensure y.fem was the minimum known alive
     # rather than a typical state space model.
@@ -583,7 +595,7 @@ nest.mange.fore = c(63,62,0,0,0,125)
 
 #forecast count data
 y.fem = apply(dat,2,sum)
-y.fem[32:(Time+Time.fore)] = NA
+#y.fem[32:(Time+Time.fore)] = NA
 
 #dat.fore = rbind(dat,matrix(0,100,31))
 #dat.fore = cbind(dat.fore,c(rep(0,795),rep(1,100)))
@@ -602,21 +614,22 @@ krst_data <- list(y = y, y.fem = y.fem,
                   psiBNB.mom=psiBNB.mom,
                   p.mom=p.mom,
                   s.p.mom=s.p.mom,
+                  prob.fem.mom = prob.fem.mom,
                   in.s = in.s,
                   J = J, 
                   E.R = E.R,
                   E = E,
-                  N.p1.ini = 10,
-                  N.p2.ini = 3,
-                  N.p3.ini = 3,
-                  N.p4.ini = 3,
-                  N.p5.ini = 3,
-                  N.p6.ini = 3,
-                  N.p7.ini = 3,
-                  N.p8.ini = 3,
-                  N.p9.ini = 3,
-                  N.p10.ini = 3,
-                  N.b.ini=1, 
+                  N.p1.ini = 1000, #initial values taken from Cailouet et al 1995, Table 1
+                  N.p2.ini = 900, #survival of 0.6 assumed each year
+                  N.p3.ini = 600,
+                  N.p4.ini = 400,
+                  N.p5.ini = 300,
+                  N.p6.ini = 100,
+                  N.p7.ini = 80,
+                  N.p8.ini = 50,
+                  N.p9.ini = 40,
+                  N.p10.ini = 30,
+                  N.b.ini=2, 
                   N.nb.ini=2,
                   prob.fem = prob.fem,
                   n.fem = n.fem,
@@ -666,30 +679,32 @@ J.ini[which(is.na(J.ini))] = runif(length(which(is.na(J.ini))),0,80)
 J.ini[which(!is.na(J.ind))] = NA
 
 prob.fem.ini = prob.fem
-prob.fem.ini[which(is.na(prob.fem.ini))] = runif(length(which(is.na(prob.fem.ini))),0.1,0.9)
+prob.fem.ini[which(is.na(prob.fem.ini))] = runif(length(which(is.na(prob.fem.ini))),0.3,0.7)
 prob.fem.ini[which(!is.na(prob.fem))] = NA
+
+#### inits ####
 
 krst_ini = function() list(
   psiNBB= runif(1,.1,.5),
   psiBNB= runif(1,.5,.9),
   pB=runif(1,0.1,0.9), 
   z=zinit,
-  s.p1 = runif(1,.1,.5), 
-  N.nb = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+  s.p1 = runif(1,.6,.7), 
+  N.nb = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
   #N.b = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
-  N.b = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p1 = rpois((Time+Time.fore),seq(10,200,length.out=(Time+Time.fore))),
-  N.p2 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p3 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p4 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p5 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p6 = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  N.p7 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p8 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p9 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
-  N.p10 = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+  N.b = c(2,rpois((Time+Time.fore-1),seq(2,500,length.out=(Time+Time.fore-1)))),
+  N.p1 = rpois((Time+Time.fore),seq(1000,10000,length.out=(Time+Time.fore))),
+  N.p2 = rpois((Time+Time.fore),seq(800,5000,length.out=(Time+Time.fore))),
+  N.p3 = rpois((Time+Time.fore),seq(600,4000,length.out=(Time+Time.fore))),
+  N.p4 = rpois((Time+Time.fore),seq(400,2000,length.out=(Time+Time.fore))),
+  N.p5 = rpois((Time+Time.fore),seq(200,1000,length.out=(Time+Time.fore))),
+  N.p6 = rpois((Time+Time.fore),seq(110,800,length.out=(Time+Time.fore))),
+  N.p7 = rpois((Time+Time.fore),seq(75,600,length.out=(Time+Time.fore))),
+  N.p8 = rpois((Time+Time.fore),seq(50,450,length.out=(Time+Time.fore))),
+  N.p9 = rpois((Time+Time.fore),seq(25,150,length.out=(Time+Time.fore))),
+  N.p10 = rpois((Time+Time.fore),seq(10,75,length.out=(Time+Time.fore))),
   #N.i = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
-  N.i = rpois((Time+Time.fore),seq(2,200,length.out=(Time+Time.fore))),
+  N.i = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
   r = runif(1,.8,10),
   ln.mean.fem = runif(1,-1,1),
   mu.n.fem=2,
@@ -710,11 +725,13 @@ krst_ini = function() list(
   J.ind = round(J.ini),
   prob.fem = prob.fem.ini,
   n.fem = c(rep(NA,Time),rep(2,Time.fore)),
-  y.fem = c(rep(NA,Time),rep(150,Time.fore)),
+  #y.fem = c(rep(NA,Time),rep(150,Time.fore)),
   beta.slr = c(rep(NA,5),runif(1,-1,1)),
-  a.0 = runif(1,-1,1),
+  a.0 = runif(1,1,2),
   a.k = runif(1,-1,1),
   f = rep(round(f_ini),(Time+Time.fore)))
+
+#### nimble run ####
 
 krst.model <- nimbleModel(code = krst.ipm,
                            constants = krst_con,
@@ -723,7 +740,7 @@ krst.model <- nimbleModel(code = krst.ipm,
 
 krst.config.mcmc <- configureMCMC(krst.model)
 
-krst.config.mcmc$addMonitors("f")
+krst.config.mcmc$addMonitors("f","pB","phi")
 
 krst.mcmc <- buildMCMC(krst.config.mcmc)
 
@@ -732,11 +749,14 @@ krst.cmodel <- compileNimble(krst.model)
 krst.cmcmc <- compileNimble(krst.mcmc, project = krst.model)
 
 krst.samples <- runMCMC(krst.cmcmc, niter= 2000, 
-                         nburnin = 1000,nchains = 3,
+                         nburnin = 1000,
+                         nchains = 3,
                          samplesAsCodaMCMC = TRUE)
 
 library(coda)
 library(parallel)
+
+#### nimble cluster ####
 
 nc = 3 #num of chains
 clus = makeCluster(nc)
@@ -762,7 +782,8 @@ out <- clusterEvalQ(clus, {
   Cmodel <- compileNimble(model)
   modelConf <- configureMCMC(model)
   #modelConf$addMonitors(params)
-  modelConf$addMonitors(c("phi","N.i","N.b","beta.temp.all","f","prob.fem"))
+  modelConf$addMonitors(c("phi","N.i","N.b","pB",
+                          "beta.temp.all","f","eps.imm"))
   #configureRJ(modelConf,
   #            targetNodes = 'beta',
   #            indicatorNodes = 'indA',
@@ -778,11 +799,15 @@ out <- clusterEvalQ(clus, {
 
 out.mcmc <- as.mcmc.list(out) 
 
+#stopCluster(clus)
+
 out2 <- clusterEvalQ(clus,{
-  CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
+  CmodelMCMC$run(10000,reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
 out.up <- as.mcmc.list(out2)
+
+#stopCluster(clus)
 
 save(out.up, file="KRST_out.RData")
