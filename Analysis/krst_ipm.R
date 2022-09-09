@@ -158,14 +158,11 @@ krst.ipm <- nimbleCode({
   #### priors for adult survival ####
   
   for(t in 1:((Time+Time.fore)-1)){
-  #phi[t] ~ dbeta(phi.mom[1],phi.mom[2]) #surv prob of breeders
   l.phi[t] <- ln.mu.phi[t]
   l.lim[t] <- min(99, max(-99, l.phi[t]))
   phi[t] <- 1/(1+exp(-l.lim[t]))
   }
   
-  #for(j in 1:max(phi.ind)){
-    #ln.mu.phi[j] ~ dnorm(mu.phi,var = sd.phi2)
   for(t in 1:((Time+Time.fore)-1)){
     ln.mu.phi[t] ~ dnorm(mu.phi,var=sd.phi2)
   }
@@ -196,12 +193,13 @@ krst.ipm <- nimbleCode({
   N.p5[1] ~ dpois(N.p5.ini)
   N.p6[1] ~ dpois(N.p6.ini)
   N.p7[1] ~ dpois(N.p7.ini)
-  N.p8[1] ~ dpois(N.p8.ini)
-  N.p9[1] ~ dpois(N.p9.ini)
-  N.p10[1] ~ dpois(N.p10.ini)
-  N.b[1] ~ dpois(N.b.ini)
-  #N.b[1] <- 1
-  N.nb[1] ~ dpois(N.nb.ini)
+  #N.p8[1] ~ dpois(N.p8.ini)
+  #N.p9[1] ~ dpois(N.p9.ini)
+  #N.p10[1] ~ dpois(N.p10.ini)
+  #N.b[1] ~ dpois(N.b.ini)
+  #N.nb[1] ~ dpois(N.nb.ini)
+  N.b[1] <- 1
+  N.nb[1] <- 1
   
   #probabilities of state z(t+1) given z(t)
   for(t in 1:((Time+Time.fore)-1)){
@@ -265,7 +263,8 @@ krst.ipm <- nimbleCode({
 
   #first 24 years (until 2015) only have data on
   # total number of eggs and total hatchlings released
-  for(t in 1:24){
+  #for(t in 1:24){
+  for(t in 1:21){
     #number of successful hatchlings released
     # out of total number of eggs
     
@@ -292,71 +291,74 @@ krst.ipm <- nimbleCode({
       beta.slr[nest.mange[i]]*slr.cov[i]
   }
   
-  f[25] ~ dpois(mean(E.ind[1:year.mean.idx[25]])*mean(prob.egg.ind[1:year.mean.idx[25]]))
+  f[22] ~ dpois(mean(E.ind[1:year.mean.idx[22]])*mean(prob.egg.ind[1:year.mean.idx[22]]))
+  #f[25] ~ dpois(mean(E.ind[1:year.mean.idx[25]])*mean(prob.egg.ind[1:year.mean.idx[25]]))
   
-  for(t in 26:Time){
+  for(t in 23:Time){
+  #for(t in 26:Time){
     f[t] ~ dpois(mean(E.ind[(year.mean.idx[t-1]+1):year.mean.idx[t]])*mean(prob.egg.ind[(year.mean.idx[t-1]+1):year.mean.idx[t]]))
   }
   
   for(t in (Time+1):(Time+Time.fore)){
-    logit(prob.egg.fore.tmp[1:6,(t-31)]) <- nest.cov[1:6] + beta.temp[1:6]*clim.cov.fore[(t-31)] +
-      beta.slr[1:6]*slr.cov.fore[(t-31)]
-    prob.egg.fore[(t-31)] <- sum(prob.egg.fore.tmp[1:6,(t-31)]*nest.mange.fore[1:6])/sum(nest.mange.fore[1:6])
-    f[t] ~ dpois(E.ind.fore*prob.egg.fore[(t-31)])
+    #logit(prob.egg.fore.tmp[1:6,(t-31)]) <- nest.cov[1:6] + beta.temp[1:6]*clim.cov.fore[(t-31)] +
+    #  beta.slr[1:6]*slr.cov.fore[(t-31)]
+    #prob.egg.fore[(t-31)] <- sum(prob.egg.fore.tmp[1:6,(t-31)]*nest.mange.fore[1:6])/sum(nest.mange.fore[1:6])
+    #f[t] ~ dpois(E.ind.fore*prob.egg.fore[(t-31)])
+    logit(prob.egg.fore.tmp[1:6,(t-28)]) <- nest.cov[1:6] + beta.temp[1:6]*clim.cov.fore[(t-28)] +
+      beta.slr[1:6]*slr.cov.fore[(t-28)]
+    prob.egg.fore[(t-28)] <- sum(prob.egg.fore.tmp[1:6,(t-28)]*nest.mange.fore[1:6])/sum(nest.mange.fore[1:6])
+    f[t] ~ dpois(E.ind.fore*prob.egg.fore[(t-28)])
   }
   
   ##
   #####number of nests per female per year####
   ##
   
-  for(t in 1:(Time+Time.fore)){  
-  n.fem[t] ~ dgamma(mean = mu.n.fem, sd = sd.n.fem)
-  }
+  #for(t in 1:Time){  
+  #n.fem[t] ~ dgamma(mean = mu.n.fem, sd = sd.n.fem)
+  #}
   
-  mu.n.fem ~ dunif(1,4)
-  sd.n.fem ~ dunif(0,10)
+  #mu.n.fem ~ dunif(1,4)
+  #sd.n.fem ~ dunif(0,10)
+  
+  mu.n.fem <- 2
   
   #Probability of hatchling being female
-  for(t in 1:Time+Time.fore){
-    prob.fem[t] ~ dbeta(r*mu.fem[t], r*(1-mu.fem[t])) #Data from Shaver & Calliway
-    logit(mu.fem[t]) <- ln.mean.fem
-    #prob.fem[t] ~ dbeta(prob.fem.mom[1],prob.fem.mom[2])
-  }
+  #for(t in 1:Time){
+  #  prob.fem[t] ~ dbeta(r*mu.fem[t], r*(1-mu.fem[t])) #Data from Shaver & Calliway
+  #  logit(mu.fem[t]) <- ln.mean.fem
+  #  #prob.fem[t] ~ dbeta(prob.fem.mom[1],prob.fem.mom[2])
+  #}
   
-  ln.mean.fem ~ dnorm(0,sd=10) #prior, mean prob
-  mean.fem <- exp(ln.mean.fem)/(1+exp(ln.mean.fem))
-  r ~ dgamma(.1,.1) #overdispersion param for beta dist'n
-  #mean.fem <- mean(prob.fem[])
+  #ln.mean.fem ~ dnorm(0,sd=10) #prior, mean prob
+  #mean.fem <- exp(ln.mean.fem)/(1+exp(ln.mean.fem))
+  #r ~ dgamma(.1,.1) #overdispersion param for beta dist'n
+  mean.fem <- mean(prob.fem[1:18])
   
   #### state space model for abundance/pop matrix ####
   
   pre.br1[1] <- N.p1[1]
-  pre.br2[1] <- N.p2[1]
-  pre.br3[1] <- N.p3[1]
-  pre.br4[1] <- N.p4[1]
-  pre.br5[1] <- N.p5[1]
-  pre.br6[1] <- N.p6[1]
-  pre.br7[1] <- N.p7[1]
-  pre.br8[1] <- N.p8[1]
-  pre.br9[1] <- N.p9[1]
-  pre.br10[1] <- N.p10[1]
   no.breed[1] <- N.nb[1]
   breed[1] <- N.b[1]
-  imm[1] <- 2
-  N.i[1] <- 2
-  mu.imm ~ dnorm(0, sd = 2)
-  sd.imm ~ dinvgamma(1,1)
+  imm[1] <- 1
+  N.i[1] <- 1
+  N.tot[1] <- 2
+  #mu.imm ~ dnorm(0, sd = 2)
+  #sd.imm ~ dinvgamma(2,1)
   
   for(t in 1:(Time+Time.fore)){
-    eps.imm.tmp[t] ~ dnorm(mu.imm, var=sd.imm)
+    eps.imm.tmp[t] ~ dnorm(mu.imm, sd = 1)
     #eps.imm[t] <- min(eps.imm.tmp[t],10)
+    #eps.imm.tmp[t] ~ dnorm(3, sd = 1)
     eps.imm[t] <- eps.imm.tmp[t]
   }
   
   for(t in 2:(Time+Time.fore)){
     
+    N.tot[t] <- N.b[t] + N.i[t]
+    
     #s.p1 is transition probability * survival
-    pre.br1[t] <- f[t-1] * mean.fem * N.b[t-1] * s.p1 * mu.n.fem #+ 
+    pre.br1[t] <- f[t-1] * mean.fem * N.tot[t-1] * s.p1 * mu.n.fem #+ 
       #(N.p1[t-1]*(1-s.p1))
     #pre.br2[t] <- N.p1[t-1]*s.p1 #+
       #N.p2[t-1]*(1-s.p1) 
@@ -377,11 +379,11 @@ krst.ipm <- nimbleCode({
     #pre.br10[t] <- N.p9[t-1]*s.p1 #+
       #N.p10[t-1]*(1-s.p1)
     
-    no.breed[t] <- max(1,(N.nb[t-1] * phi[t-1] * (1-psiNBB)) + 
-      (N.b[t-1] * phi[t-1] * psiBNB))
-    breed[t] <- max(1,(N.p10[t-1] * s.p1) +
+    no.breed[t] <- (N.nb[t-1] * phi[t-1] * (1-psiNBB)) + 
+      (N.b[t-1] * phi[t-1] * psiBNB)
+    breed[t] <- (N.p7[t-1] * s.p1) +
       (N.nb[t-1] * phi[t-1] * psiNBB) +
-      (N.b[t-1] * phi[t-1] * (1-psiBNB)))
+      (N.b[t-1] * phi[t-1] * (1-psiBNB))
                        
     N.p1[t] ~ dpois(pre.br1[t])
     #N.p2[t] ~ dpois(s.p1*N.p1[t-1])
@@ -397,24 +399,25 @@ krst.ipm <- nimbleCode({
     #N.p7[t] ~ dpois(N.p6[t-1]*s.p1)
     N.p7[t] ~ dbinom(s.p1,N.p6[t-1])
     #N.p8[t] ~ dpois(N.p7[t-1]*s.p1)
-    N.p8[t] ~ dbinom(s.p1,N.p7[t-1])
+    #N.p8[t] ~ dbinom(s.p1,N.p7[t-1])
     #N.p9[t] ~ dpois(N.p8[t-1]*s.p1)
-    N.p9[t] ~ dbinom(s.p1,N.p8[t-1])
+    #N.p9[t] ~ dbinom(s.p1,N.p8[t-1])
     #N.p10[t] ~ dpois(N.p9[t-1]*s.p1)
-    N.p10[t] ~ dbinom(s.p1,N.p9[t-1])
+    #N.p10[t] ~ dbinom(s.p1,N.p9[t-1])
     N.nb[t] ~ dpois(no.breed[t])
     N.b[t] ~ dpois(breed[t])
     log(imm[t]) <- eps.imm[t]
     N.i[t] ~ dpois(imm[t])
   }
   
-  for(t in 1:(Time+Time.fore)){
-    Ntot[t] <- N.b[t] + N.nb[t]
-  }
+  #for(t in 1:(Time+Time.fore)){
+  #  Ntot[t] <- N.b[t] + N.nb[t]
+  #}
   
   #number of females seen as count data
 
   for(t in 1:Time){
+  #for(t in 1:(Time+Time.fore)){
     #tried to constrain distribution in some way
     # to ensure y.fem was the minimum known alive
     # rather than a typical state space model.
@@ -423,7 +426,7 @@ krst.ipm <- nimbleCode({
     #y.fem[t] ~ dnorm(N.b[t] + N.i[t],var=sd.y2)
     #y.fem[t] ~ T(dnorm(N.b[t] + N.i[t], sd=sd.y2),1,500)
     #y.fem[t] ~ dpois(theta*(N.b[t] + N.i[t]))
-    y.fem[t] ~ dpois(N.b[t] + N.i[t])
+    y.fem[t] ~ dpois(N.tot[t])
     #y.fem[t] ~ T(dpois(N.b[t] + N.i[t]),trun[t],1000)
     #constraint_data[t] ~ dconstraint(N.b[t] + N.i[t] > trun[t])
     }
@@ -436,7 +439,8 @@ f_ini <- mean(tx_nest_dat$hatch_per_nest)
 #Nest data starts w/ four years prior to 1991 - 2014, minus total in last row
 
 #remove last column (2022) from dat, not complete data
-dat = dat[,1:31]
+#dat = dat[,1:31]
+dat = dat[2:814,4:31]
 
 y=dat+1
 #z.ini=zinits_dcat+1
@@ -448,26 +452,33 @@ fem.dat = read.csv("hatch_sexes.csv")
 Time = dim(dat)[2]
 Time.fore = 45
 
-prob.fem = c(fem.dat$prob_fem[-c(1:4)]/100,rep(NA,8))
-prob.fem[(Time+Time.fore)] = NA
+#prob.fem = c(fem.dat$prob_fem[-c(1:4)]/100,rep(NA,8))
+prob.fem = c(fem.dat$prob_fem[-c(1:5)]/100,rep(NA,6))
+#prob.fem[(Time+Time.fore)] = NA
 
 #phi.cov = rnorm(30,0,1)
 #fec.cov = rnorm(31,0,1)
 #phi.ind = c(rep(1,18), rep(2,3),rep(3,9))
 #phi.ind = c(rep(1,5),rep(2,5),rep(3,5),rep(4,5),rep(5,5),rep(6,5))
 
-n.fem = tx_nest_dat$nests[-c(1:4)]/apply(dat,2,sum)
-n.fem[2:4] <-1
-n.fem[(Time+Time.fore)] <- NA
+n.fem = tx_nest_dat$nests[-c(1:7)]/apply(dat,2,sum)
+#n.fem[2:4] <-1
+n.fem[1] <- 1
+#n.fem[(Time+Time.fore)] <- NA
 
 #Nest success data
 
-E = (tx_nest_dat$eggs_intact[-c(1:4,25:31)] + tx_nest_dat$eggs_broken[-c(1:4,25:31)])
-J = tx_nest_dat$hatch_release[-c(1:4,25:31)]
+#E = (tx_nest_dat$eggs_intact[-c(1:4,25:31)] + tx_nest_dat$eggs_broken[-c(1:4,25:31)])
+#J = tx_nest_dat$hatch_release[-c(1:4,25:31)]
+E = (tx_nest_dat$eggs_intact[-c(1:7,25:31)] + tx_nest_dat$eggs_broken[-c(1:7,25:31)])
+J = tx_nest_dat$hatch_release[-c(1:7,25:31)]
+
+
 #j.e = J/E
 #j.e[2:3] = NA #beta data can't include 0
-E.R = E/tx_nest_dat$nests[-c(1:4,25:31)]
-E.R[2:3] <- 0.01
+#E.R = E/tx_nest_dat$nests[-c(1:4,25:31)]
+#E.R[2:3] <- 1
+E.R = E/tx_nest_dat$nests[-c(1:7,25:31)]
 
 incu = nest.pro$incubation.type
 #incu = incu[-which(incu=="S")]
@@ -521,11 +532,13 @@ E.ind = E.ind[-1472]
 E.ind[is.na(E.ind)] = round(mean(E.ind,na.rm=TRUE))
 
 year = nest.pro$Year
-year = year - 1990
+#year = year - 1990
+year = year - 1993
 year = year[-1472]
 
 year.mean.idx = as.numeric()
-for(t in 25:31){
+#for(t in 25:31){
+for(t in 22:28){
   year.mean.idx[t] = max(which(year == t))
 }
 
@@ -596,6 +609,7 @@ nest.mange.fore = c(63,62,0,0,0,125)
 #forecast count data
 y.fem = apply(dat,2,sum)
 #y.fem[32:(Time+Time.fore)] = NA
+y.fem[29:(Time+Time.fore)] = NA
 
 #dat.fore = rbind(dat,matrix(0,100,31))
 #dat.fore = cbind(dat.fore,c(rep(0,795),rep(1,100)))
@@ -614,23 +628,23 @@ krst_data <- list(y = y, y.fem = y.fem,
                   psiBNB.mom=psiBNB.mom,
                   p.mom=p.mom,
                   s.p.mom=s.p.mom,
-                  prob.fem.mom = prob.fem.mom,
+                  #prob.fem.mom = prob.fem.mom,
                   in.s = in.s,
                   J = J, 
                   E.R = E.R,
                   E = E,
-                  N.p1.ini = 1000, #initial values taken from Cailouet et al 1995, Table 1
-                  N.p2.ini = 900, #survival of 0.6 assumed each year
-                  N.p3.ini = 600,
-                  N.p4.ini = 400,
-                  N.p5.ini = 300,
-                  N.p6.ini = 100,
-                  N.p7.ini = 80,
-                  N.p8.ini = 50,
-                  N.p9.ini = 40,
-                  N.p10.ini = 30,
-                  N.b.ini=2, 
-                  N.nb.ini=2,
+                  N.p1.ini = 200, #initial values taken from Cailouet et al 1995, Table 1
+                  N.p2.ini = 130, #survival of 0.6 assumed each year
+                  N.p3.ini = 86,
+                  N.p4.ini = 50,
+                  N.p5.ini = 33,
+                  N.p6.ini = 20,
+                  N.p7.ini = 13,
+                  #N.p8.ini = 10,
+                  #N.p9.ini = 5,
+                  #N.p10.ini = 3,
+                  #N.b.ini=2, 
+                  #N.nb.ini=2,
                   prob.fem = prob.fem,
                   n.fem = n.fem,
                   J.ind = J.ind,
@@ -650,6 +664,9 @@ bio5.585.2 = make.fore.dat(hist.bioc.means = hist.bioc.means,
 #future patrol effort
 k.scale = as.numeric(scale(kilo.patrol))
 kilo.patrol.fore = c(k.scale,rep(k.scale[31],Time.fore))
+kilo.patrol[kilo.patrol > 153250] = 1
+kilo.patrol[kilo.patrol > 1] = 0
+kilo.patrol.fore = c(kilo.patrol,rep(1,Time.fore))
 
 krst_con <- list(N = nrow(y), Time = ncol(dat), 
                  first=first,
@@ -659,7 +676,7 @@ krst_con <- list(N = nrow(y), Time = ncol(dat),
                  year.mean.idx = year.mean.idx,
                  N.nest = length(J.ind),
                  kilo.patrol = kilo.patrol.fore,
-                 may.tmax.ann = bio5.585.2$bio5.ann,
+                 may.tmax.ann = bio5.585.2$bio5.ann[4:31],
                  clim.cov = bio5.585.2$bio5.out,
                  clim.cov.fore = bio5.585.2$bio5.fore.cov,
                  nest.mange.fore = nest.mange.fore,
@@ -685,32 +702,31 @@ prob.fem.ini[which(!is.na(prob.fem))] = NA
 #### inits ####
 
 krst_ini = function() list(
-  psiNBB= runif(1,.1,.5),
-  psiBNB= runif(1,.5,.9),
-  pB=runif(1,0.1,0.9), 
+  psiNBB= runif(1,.2,.45),
+  psiBNB= runif(1,.7,.98),
+  pB=runif(1,0.8,0.9), 
   z=zinit,
-  s.p1 = runif(1,.6,.7), 
-  N.nb = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
-  #N.b = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
-  N.b = c(2,rpois((Time+Time.fore-1),seq(2,500,length.out=(Time+Time.fore-1)))),
-  N.p1 = rpois((Time+Time.fore),seq(1000,10000,length.out=(Time+Time.fore))),
-  N.p2 = rpois((Time+Time.fore),seq(800,5000,length.out=(Time+Time.fore))),
-  N.p3 = rpois((Time+Time.fore),seq(600,4000,length.out=(Time+Time.fore))),
-  N.p4 = rpois((Time+Time.fore),seq(400,2000,length.out=(Time+Time.fore))),
-  N.p5 = rpois((Time+Time.fore),seq(200,1000,length.out=(Time+Time.fore))),
-  N.p6 = rpois((Time+Time.fore),seq(110,800,length.out=(Time+Time.fore))),
-  N.p7 = rpois((Time+Time.fore),seq(75,600,length.out=(Time+Time.fore))),
-  N.p8 = rpois((Time+Time.fore),seq(50,450,length.out=(Time+Time.fore))),
-  N.p9 = rpois((Time+Time.fore),seq(25,150,length.out=(Time+Time.fore))),
-  N.p10 = rpois((Time+Time.fore),seq(10,75,length.out=(Time+Time.fore))),
+  s.p1 = runif(1,.1,.5), 
+  N.nb = c(NA,rpois((Time+Time.fore-1),seq(2,200,length.out=(Time+Time.fore-1)))),
+  N.b = c(NA,rpois((Time+Time.fore-1),seq(2,200,length.out=(Time+Time.fore-1)))),
+  N.p1 = rpois((Time+Time.fore),seq(220,10000,length.out=(Time+Time.fore))),
+  N.p2 = rpois((Time+Time.fore),seq(130,2000,length.out=(Time+Time.fore))),
+  N.p3 = rpois((Time+Time.fore),seq(85,1000,length.out=(Time+Time.fore))),
+  N.p4 = rpois((Time+Time.fore),seq(50,800,length.out=(Time+Time.fore))),
+  N.p5 = rpois((Time+Time.fore),seq(30,400,length.out=(Time+Time.fore))),
+  N.p6 = rpois((Time+Time.fore),seq(20,200,length.out=(Time+Time.fore))),
+  N.p7 = rpois((Time+Time.fore),seq(10,100,length.out=(Time+Time.fore))),
+  #N.p8 = rpois((Time+Time.fore),seq(8,125,length.out=(Time+Time.fore))),
+  #N.p9 = rpois((Time+Time.fore),seq(5,60,length.out=(Time+Time.fore))),
+  #N.p10 = rpois((Time+Time.fore),seq(3,45,length.out=(Time+Time.fore))),
   #N.i = rpois((Time+Time.fore),c(trun[1:Time]/2,rep(50,Time.fore))),
-  N.i = rpois((Time+Time.fore),seq(2,500,length.out=(Time+Time.fore))),
+  N.i = c(NA,rpois((Time+Time.fore-1),seq(1,100,length.out=(Time+Time.fore-1)))),
   r = runif(1,.8,10),
-  ln.mean.fem = runif(1,-1,1),
-  mu.n.fem=2,
-  sd.n.fem = runif(1,.1,1),
-  mu.phi = runif(1,1,2.2),
-  sd.phi2=runif(1,.1,1),
+  ln.mean.fem = runif(1,1,3),
+  #mu.n.fem= runif(1,1.5,3),
+  #sd.n.fem = runif(1,.1,1),
+  mu.phi = runif(1,2,2.2),
+  sd.phi2=runif(1,.1,1.5),
   mu.egg = runif(1,-1,1),
   nest.cov = c(runif(5,-1,1),NA),
   insitu.surv = runif(1,.1,.8),
@@ -719,16 +735,16 @@ krst_ini = function() list(
   beta.temp.all = runif(1,-1,1),
   beta.temp = runif(6,-1,1),
   mu.imm = runif(1,-1,1),
-  sd.imm = runif(1,.01,1),
+  #sd.imm = runif(1,.01,1),
   ln.mu.phi = runif((Time+Time.fore-1),1,2.2),
   eps.imm.tmp = runif((Time+Time.fore),-1,1),
   J.ind = round(J.ini),
   prob.fem = prob.fem.ini,
-  n.fem = c(rep(NA,Time),rep(2,Time.fore)),
+  #n.fem = c(rep(NA,Time),rep(2,Time.fore)),
   #y.fem = c(rep(NA,Time),rep(150,Time.fore)),
   beta.slr = c(rep(NA,5),runif(1,-1,1)),
-  a.0 = runif(1,1,2),
-  a.k = runif(1,-1,1),
+  #a.0 = runif(1,1,2),
+  #a.k = runif(1,-1,1),
   f = rep(round(f_ini),(Time+Time.fore)))
 
 #### nimble run ####
@@ -802,7 +818,7 @@ out.mcmc <- as.mcmc.list(out)
 #stopCluster(clus)
 
 out2 <- clusterEvalQ(clus,{
-  CmodelMCMC$run(10000,reset=FALSE, resetMV=TRUE)
+  CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
