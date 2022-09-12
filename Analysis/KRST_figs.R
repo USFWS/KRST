@@ -11,7 +11,7 @@ col.plot=viridis(5,alpha=.6)
 
 Time = 31
 Time.fore = 45
-plot.year = 1990+Time+Time.fore
+plot.year = 1993+Time+Time.fore
 
 ## Figure for abundance
 Nb = apply(out[,1:(Time+Time.fore)],2,mean)
@@ -41,16 +41,16 @@ Nad.high[i] =quantile(rowSums(cbind(out[,i],out[,i+(2*(Time+Time.fore))])),0.975
 
 par(mfrow=c(2,1))
 
-plot(Nad,x=seq(1991,plot.year), type="l", ylab = "Abundance", 
+plot(Nad,x=seq(1994,plot.year), type="l", ylab = "Abundance", 
      xlab= "Year",col=col.plot[1],ylim=c(0,max(Nad.high)))
-polygon(c(seq(1991,plot.year),rev(seq(1991,plot.year))),
+polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
      c(Nad.low,rev(Nad.high)),col=col.plot[1])
 #mtext("A) Total Abundance", side=3, line=.5, adj=0)
 #axis(side=1, at=seq(1991,2021), labels=FALSE)
 
-plot(Nb, x = seq(1991,plot.year), type="l", ylab="Abundance",
-     xlab="Year",ylim=c(0,max(Nnb.high)))
-polygon(c(seq(1991,plot.year), rev(seq(1991,plot.year))),
+plot(Nb, x = seq(1994,plot.year), type="l", ylab="Abundance",
+     xlab="Year",ylim=c(0,max(Nb.high)))
+polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
         c(Nb.low,rev(Nb.high)),col=col.plot[2])
 
 
@@ -82,25 +82,25 @@ par(
   cex=1, 	# make sure the text and points are a normal size even if your plot window is an unusual size (R likes to resize spontaneously)
   mgp=c(3,0.8,0))
 
-plot(N.t,x=seq(1991,plot.year), type="l", 
+plot(N.t,x=seq(1994,plot.year), type="l", 
      xlab= "Year",col="black",
      ylab = "Abundance",
      ylim=c(0,max(Nt.high)))
-polygon(c(seq(1991,plot.year),rev(seq(1991,plot.year))),
+polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
         c(Nt.low,rev(Nt.high)),col=col.plot[4])
 
 
 #axis(side=1, at=seq(1991,2021), labels=FALSE)
 
 
-plot(Nb, x= seq(1991,plot.year),type="l",
+plot(Nb, x= seq(1994,plot.year),type="l",
      ylim=c(0,max(Nb.high)),
      xlab = "Year", ylab = "Abundance")
-polygon(c(seq(1991,plot.year),rev(seq(1991,plot.year))),
+polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
         c(Nb.low,rev(Nb.high)),col=col.plot[3])
-lines(imm, x = seq(1991,plot.year), type="l", ylab="Abundance",
+lines(imm, x = seq(1994,plot.year), type="l", ylab="Abundance",
      xlab="Year",ylim=c(0,max(imm.h)))
-polygon(c(seq(1991,plot.year), rev(seq(1991,plot.year))),
+polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
         c(imm.l,rev(imm.h)),col=col.plot[5])
 #lines(Nb, x = seq(1991,2021), type="l", ylab="Abundance",
 #     xlab="Year",ylim=c(0,max(Nnb.high)))

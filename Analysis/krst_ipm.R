@@ -255,8 +255,9 @@ krst.ipm <- nimbleCode({
   }
   nest.cov[6] <- log(insitu.surv/(1-insitu.surv))
   beta.temp[6] ~ dnorm(-1,sd=1)
+  beta.temp[7] ~ dnorm(mu.temp, var = var.temp)
   beta.slr[6] ~ dnorm(-1,sd=1)
-  beta.temp.all ~ dnorm(mu.temp, var = var.temp)
+  #beta.temp.all ~ dnorm(mu.temp, var = var.temp)
   #beta.temp.all2 ~ dnorm(0,sd=2)
   mu.temp ~ dnorm(0, sd = 1)
   var.temp ~ dinvgamma(1,1)
@@ -272,7 +273,7 @@ krst.ipm <- nimbleCode({
     J[t] ~ dbinom(size = E[t], prob = prob.egg[t]) 
  
     #prob.egg is probability of egg surviving to hatchling
-    logit(prob.egg[t]) <- mu.egg + beta.temp.all*may.tmax.ann[t]
+    logit(prob.egg[t]) <- mu.egg + beta.temp[7]*may.tmax.ann[t]
     
     #f is hatchlings per nest per female per year
     f[t] ~ dpois(E.R[t]*prob.egg[t])
@@ -314,20 +315,20 @@ krst.ipm <- nimbleCode({
   #####number of nests per female per year####
   ##
   
-  #for(t in 1:Time){  
-  #n.fem[t] ~ dgamma(mean = mu.n.fem, sd = sd.n.fem)
-  #}
+  for(t in 1:Time){  
+  n.fem[t] ~ dgamma(mean = mu.n.fem, sd = sd.n.fem)
+  }
   
-  #mu.n.fem ~ dunif(1,4)
-  #sd.n.fem ~ dunif(0,10)
+  mu.n.fem ~ dunif(1,4)
+  sd.n.fem ~ dunif(0,10)
   
-  mu.n.fem <- 2
+  #mu.n.fem <- 2
   
   #Probability of hatchling being female
   #for(t in 1:Time){
-  #  prob.fem[t] ~ dbeta(r*mu.fem[t], r*(1-mu.fem[t])) #Data from Shaver & Calliway
-  #  logit(mu.fem[t]) <- ln.mean.fem
-  #  #prob.fem[t] ~ dbeta(prob.fem.mom[1],prob.fem.mom[2])
+  #  prob.fem[t] ~ dbeta(r*mean.fem, r*(1-mean.fem)) #Data from Shaver & Calliway
+    #logit(mu.fem[t]) <- ln.mean.fem
+    #prob.fem[t] ~ dbeta(prob.fem.mom[1],prob.fem.mom[2])
   #}
   
   #ln.mean.fem ~ dnorm(0,sd=10) #prior, mean prob
@@ -649,7 +650,10 @@ krst_data <- list(y = y, y.fem = y.fem,
                   n.fem = n.fem,
                   J.ind = J.ind,
                   E.ind = E.ind,
-                  E.ind.fore = 96)
+                  E.ind.fore = 96,
+                  mu.imm = 2)
+
+#### current NM, worst case global change ####
 
 source("~/KRST/Analysis/make_fore_dat.R", echo=TRUE)
 slr.scenario = "2.0 - MED"
@@ -675,7 +679,7 @@ krst_con <- list(N = nrow(y), Time = ncol(dat),
                  year = year,
                  year.mean.idx = year.mean.idx,
                  N.nest = length(J.ind),
-                 kilo.patrol = kilo.patrol.fore,
+                 #kilo.patrol = kilo.patrol.fore,
                  may.tmax.ann = bio5.585.2$bio5.ann[4:31],
                  clim.cov = bio5.585.2$bio5.out,
                  clim.cov.fore = bio5.585.2$bio5.fore.cov,
@@ -706,7 +710,7 @@ krst_ini = function() list(
   psiBNB= runif(1,.7,.98),
   pB=runif(1,0.8,0.9), 
   z=zinit,
-  s.p1 = runif(1,.1,.5), 
+  s.p1 = runif(1,.45,.55), 
   N.nb = c(NA,rpois((Time+Time.fore-1),seq(2,200,length.out=(Time+Time.fore-1)))),
   N.b = c(NA,rpois((Time+Time.fore-1),seq(2,200,length.out=(Time+Time.fore-1)))),
   N.p1 = rpois((Time+Time.fore),seq(220,10000,length.out=(Time+Time.fore))),
@@ -723,8 +727,8 @@ krst_ini = function() list(
   N.i = c(NA,rpois((Time+Time.fore-1),seq(1,100,length.out=(Time+Time.fore-1)))),
   r = runif(1,.8,10),
   ln.mean.fem = runif(1,1,3),
-  #mu.n.fem= runif(1,1.5,3),
-  #sd.n.fem = runif(1,.1,1),
+  mu.n.fem= runif(1,1.5,3),
+  sd.n.fem = runif(1,.1,1),
   mu.phi = runif(1,2,2.2),
   sd.phi2=runif(1,.1,1.5),
   mu.egg = runif(1,-1,1),
@@ -732,9 +736,9 @@ krst_ini = function() list(
   insitu.surv = runif(1,.1,.8),
   mu.temp = runif(1,-1,1),
   var.temp = runif(1,.1,3),
-  beta.temp.all = runif(1,-1,1),
-  beta.temp = runif(6,-1,1),
-  mu.imm = runif(1,-1,1),
+  #beta.temp.all = runif(1,-1,1),
+  beta.temp = runif(7,-1,1),
+  #mu.imm = runif(1,-1,1),
   #sd.imm = runif(1,.01,1),
   ln.mu.phi = runif((Time+Time.fore-1),1,2.2),
   eps.imm.tmp = runif((Time+Time.fore),-1,1),
@@ -787,12 +791,91 @@ for(j in seq_along(clus)){
   clusterExport(clus[j],"init")
 }
 
-out <- clusterEvalQ(clus, {
+current.5852 <- clusterEvalQ(clus, {
   library(nimble)
   library(coda)
   model <- nimbleModel(code = krst.ipm, 
                        name = "krst.ipm",
                        constants = krst_con,
+                       data = krst_data, 
+                       inits = init)
+  Cmodel <- compileNimble(model)
+  modelConf <- configureMCMC(model)
+  #modelConf$addMonitors(params)
+  modelConf$addMonitors(c("phi","N.i","N.b","pB",
+                          "f","eps.imm"))
+  #configureRJ(modelConf,
+  #            targetNodes = 'beta',
+  #            indicatorNodes = 'indA',
+  #            control = list(mean=0, scale = 2))
+  modelMCMC <- buildMCMC(modelConf)
+  CmodelMCMC <- compileNimble(modelMCMC, 
+                              project = model)
+  #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
+  #return(as.mcmc(out1))
+  CmodelMCMC$run(100000,reset=TRUE, resetMV=TRUE)
+  return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
+})
+
+out.mcmc <- as.mcmc.list(out) 
+
+#stopCluster(clus)
+
+out2.current585 <- clusterEvalQ(clus,{
+  CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
+  return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
+})
+
+out.current.5852 <- as.mcmc.list(out2.current585)
+
+#stopCluster(clus)
+
+save(out.up, file="KRST_out.RData")
+
+#### current NM, best case global change ####
+
+slr.scenario = "0.5 - MED"
+nest.mange.fore = c(40,19,24,15,1,1) #low,incu; low,cor,PAIS; low,cor,SPI; high,incu; high,cor; insitu
+bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means, 
+                           clim.var = "bio5", 
+                           ssp = 245, 
+                           slrp.summary=slrp.summary, 
+                           sl.summary = sl.summary, 
+                           slr.scenario = slr.scenario)
+
+krst_con_2455 <- list(N = nrow(y), Time = ncol(dat), 
+                 first=first,
+                 Time.fore = 45,
+                 nest.mange = nest.mange,
+                 year = year,
+                 year.mean.idx = year.mean.idx,
+                 N.nest = length(J.ind),
+                 kilo.patrol = kilo.patrol.fore,
+                 may.tmax.ann = bio5.245.5$bio5.ann[4:31],
+                 clim.cov = bio5.245.5$bio5.out,
+                 clim.cov.fore = bio5.245.5$bio5.fore.cov,
+                 nest.mange.fore = nest.mange.fore,
+                 slr.cov=bio5.245.5$slr.cov,
+                 slr.cov.fore = bio5.245.5$slr.cov.fore)
+
+clus2455 = makeCluster(nc)
+
+clusterExport(clus2455, c("krst.ipm","krst_ini",
+                      "krst_data",
+                      "krst_con_2455"))
+
+for(j in seq_along(clus2455)){
+  set.seed(j)
+  init <- krst_ini()
+  clusterExport(clus2455[j],"init")
+}
+
+out.2455 <- clusterEvalQ(clus2455, {
+  library(nimble)
+  library(coda)
+  model <- nimbleModel(code = krst.ipm, 
+                       name = "krst.ipm",
+                       constants = krst_con_2455,
                        data = krst_data, 
                        inits = init)
   Cmodel <- compileNimble(model)
@@ -809,21 +892,17 @@ out <- clusterEvalQ(clus, {
                               project = model)
   #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
   #return(as.mcmc(out1))
-  CmodelMCMC$run(10000,reset=TRUE, resetMV=TRUE)
+  CmodelMCMC$run(100000,reset=TRUE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
-out.mcmc <- as.mcmc.list(out) 
+#out.mcmc <- as.mcmc.list(out) 
 
 #stopCluster(clus)
 
-out2 <- clusterEvalQ(clus,{
+out2455 <- clusterEvalQ(clus2455,{
   CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
-out.up <- as.mcmc.list(out2)
-
-#stopCluster(clus)
-
-save(out.up, file="KRST_out.RData")
+out.current.2455 <- as.mcmc.list(out2455)
