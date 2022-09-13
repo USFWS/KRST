@@ -3,13 +3,15 @@ library(coda)
 library(vioplot)
 library(gplots)
 
-load("~/KRST/Analysis/KRST_out.RData")
+#load("~/KRST/Analysis/results_currentnm_5852.RData")
+load("~/KRST/Analysis/results_currentnm_5852.RData")
 
-out = as.mcmc(rbind(out.up[[1]], out.up[[2]], out.up[[3]]))
+out.2455 = as.mcmc(rbind(out.current.2455[[1]], out.current.2455[[2]], out.current.2455[[3]]))
+out.5852 = as.mcmc(rbind(out.current.5852[[1]], out.current.5852[[2]], out.current.5852[[3]]))
 
 col.plot=viridis(5,alpha=.6)
 
-Time = 31
+Time = 28
 Time.fore = 45
 plot.year = 1993+Time+Time.fore
 
@@ -117,42 +119,55 @@ legend("topleft",
 #### LAMBDA ####
 lam = matrix(NA,30000,(Time+Time.fore-1))
 n.tot = matrix(NA,30000,(Time+Time.fore))
-lam.b = matrix(NA,30000,(Time+Time.fore-1))
+lam.b.2455 = matrix(NA,30000,(Time+Time.fore-1))
+lam.b.5852 = matrix(NA,30000,(Time+Time.fore-1))
 for(t in 1:(Time+Time.fore)){
   n.tot[,t] = rowSums(cbind(out[,t], out[,(2*(Time+Time.fore))+t]))
 }
+
 for(t in 1:(Time+Time.fore-1)){ 
   #lam[,t] = n.tot[,t+1]/n.tot[,t]
-  lam.b[,t] = out[,t+1]/out[,t]
+  lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
+  lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
 }
 #remove Inf from lam
-lam[!is.finite(lam)] = NA
+lam.b.2455[!is.finite(lam.b.2455)] = NA
+lam.b.5852[!is.finite(lam.b.5852)] = NA
 
 lam.low = apply(lam[,1:(Time-1)],2,quantile,0.025,na.rm=TRUE)
 lam.high = apply(lam[,1:(Time-1)],2,quantile,0.975,na.rm=TRUE)
-lam.low.fore = apply(lam[,(Time):(Time+Time.fore-1)],2,quantile,0.025)
-lam.high.fore = apply(lam[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
-lam.med.all = apply(lam[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.low.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.low.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.high.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
+lam.high.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
+lam.med.all.2455 = apply(lam.b.2455[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.med.all.5852 = apply(lam.b.5852[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 
 par(mfrow=c(1,1))
 #vioplot(lam[,-1],ylim=c(0,3),names=seq(1993,(1991+Time+Time.fore)))
-boxplot(cbind(lam[,1:(Time-1)],matrix(NA,30000,(Time.fore-1))),
+boxplot(cbind(lam.b.2455[,1:(Time-1)],matrix(NA,30000,(Time.fore-1))),
         ylab = expression(lambda),
-        names = seq(1992,(1990+Time+Time.fore-1)),outline=FALSE)
+        names = seq(1995,(1993+Time+Time.fore-1)),outline=FALSE)
 
 #plot(y=lam.med.all, x=seq(1992,(1991+Time+Time.fore-1)),
 #     type="l",ylim=c(min(lam.low),max(lam.high)),
 #     lty=2,lwd=3,ylab=expression(lambda),
 #     xlab="Year")
-polygon(c(seq(1992,(1991+Time-1)), 
-          rev(seq(1992,(1991+Time-1)))),
+polygon(c(seq(1995,(1994+Time-1)), 
+          rev(seq(1995,(1994+Time-1)))),
         c(lam.low,rev(lam.high)),
         col=col.plot[1])
 
 polygon(c(seq(Time,(Time+Time.fore-1)), 
           rev(seq(Time,(Time+Time.fore-1)))),
-        c(lam.low.fore,rev(lam.high.fore)),
+        c(lam.low.fore.2455,rev(lam.high.fore.2455)),
           col=col.plot[2])
+polygon(c(seq(Time,(Time+Time.fore-1)), 
+          rev(seq(Time,(Time+Time.fore-1)))),
+        c(lam.low.fore.5852,rev(lam.high.fore.2455)),
+        col=col.plot[5])
+
+
 lines(y=lam.med.all[Time:(Time+Time.fore-1)],
       x=seq(Time,(Time+Time.fore-1)),lty=3,lwd=2)
 abline(h=1)
