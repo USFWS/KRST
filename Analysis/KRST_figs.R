@@ -4,10 +4,13 @@ library(vioplot)
 library(gplots)
 
 #load("~/KRST/Analysis/results_currentnm_5852.RData")
-load("~/KRST/Analysis/results_currentnm_5852.RData")
+load("~/KRST/Analysis/results_currentnm_2455.RData")
 
 out.2455 = as.mcmc(rbind(out.current.2455[[1]], out.current.2455[[2]], out.current.2455[[3]]))
 out.5852 = as.mcmc(rbind(out.current.5852[[1]], out.current.5852[[2]], out.current.5852[[3]]))
+
+out.is0 = as.mcmc(rbind(out.current.2455.is0[[1]], out.current.2455.is0[[2]], out.current.2455.is0[[3]]))
+out.is1 =as.mcmc(rbind(out.current.2455.is1[[1]], out.current.2455.is1[[2]], out.current.2455.is1[[3]]))
 
 col.plot=viridis(5,alpha=.6)
 
@@ -16,9 +19,13 @@ Time.fore = 45
 plot.year = 1993+Time+Time.fore
 
 ## Figure for abundance
-Nb = apply(out[,1:(Time+Time.fore)],2,mean)
-Nb.low = apply(out[,1:(Time+Time.fore)],2,quantile,0.025)
-Nb.high = apply(out[,1:(Time+Time.fore)],2,quantile,0.975)
+Nb.2455 = apply(out.2455[,1:(Time+Time.fore)],2,mean)
+Nb.low.2455 = apply(out.2455[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.2455 = apply(out.2455[,1:(Time+Time.fore)],2,quantile,0.975)
+Nb.5852 = apply(out.5852[,1:(Time+Time.fore)],2,mean)
+Nb.low.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,0.975)
+
 imm = apply(out[,(Time+Time.fore+1):(2*(Time+Time.fore))],2,mean)
 imm.l = apply(out[,(Time+Time.fore+1):(2*(Time+Time.fore))],2,quantile,0.025)
 imm.h = apply(out[,(Time+Time.fore+1):(2*(Time+Time.fore))],2,quantile,0.975)
@@ -116,11 +123,45 @@ legend("topleft",
        bty="n",col=c(col.plot[5],col.plot[3]),
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
+Nb.is0 = apply(out.is0[,1:(Time+Time.fore)],2,mean)
+Nb.low.is0 = apply(out.is0[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.is0 = apply(out.is0[,1:(Time+Time.fore)],2,quantile,0.975)
+Nb.is1 = apply(out.is1[,1:(Time+Time.fore)],2,mean)
+Nb.low.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,0.975)
+
+plot(Nb.2455, x= seq(1994,plot.year),type="l",
+     ylim=c(0,max(Nb.high.2455)),
+     xlab = "Year", ylab = "Abundance")
+polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
+        c(Nb.low.2455,rev(Nb.high.2455)),col=col.plot[3])
+lines(Nb.5852, x = seq(1994,plot.year), type="l", ylab="Abundance",
+      xlab="Year",ylim=c(0,max(imm.h)))
+polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
+        c(Nb.low.5852,rev(Nb.high.5852)),col=col.plot[5])
+
+legend("topleft", 
+       legend=c("SSP2-4.5, 2 m SLR", "SSP5-8.5, 2 m SLR"), pch=c(16,16),
+       bty="n",col=c(col.plot[3],col.plot[5]),
+       x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
+
+lines(Nb.is0, x = seq(1994,plot.year), lty=3,lwd=2)
+polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
+        c(Nb.low.is0,rev(Nb.high.is0)),col=col.plot[5])
+
+legend("topleft", 
+       legend=c("Current Management", "All In Situ PAIS"), pch=c(16,16),
+       bty="n",col = c(col.plot[3],col.plot[5]),
+       x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
+
+
 #### LAMBDA ####
 lam = matrix(NA,30000,(Time+Time.fore-1))
 n.tot = matrix(NA,30000,(Time+Time.fore))
 lam.b.2455 = matrix(NA,30000,(Time+Time.fore-1))
 lam.b.5852 = matrix(NA,30000,(Time+Time.fore-1))
+lam.b.is0 = matrix(NA,30000, (Time+Time.fore-1))
+lam.b.is1 = matrix(NA,30000, (Time+Time.fore-1))
 for(t in 1:(Time+Time.fore)){
   n.tot[,t] = rowSums(cbind(out[,t], out[,(2*(Time+Time.fore))+t]))
 }
@@ -129,19 +170,31 @@ for(t in 1:(Time+Time.fore-1)){
   #lam[,t] = n.tot[,t+1]/n.tot[,t]
   lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
   lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
-}
+  lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
+  lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
+  }
 #remove Inf from lam
 lam.b.2455[!is.finite(lam.b.2455)] = NA
 lam.b.5852[!is.finite(lam.b.5852)] = NA
+lam.b.is0[!is.finite(lam.b.is0)] = NA
+lam.b.is1[!is.finite(lam.b.is1)]= NA
 
 lam.low = apply(lam[,1:(Time-1)],2,quantile,0.025,na.rm=TRUE)
 lam.high = apply(lam[,1:(Time-1)],2,quantile,0.975,na.rm=TRUE)
 lam.low.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.low.fore.is0 = apply(lam.b.is0[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.low.fore.is1 = apply(lam.b.is1[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+
 lam.high.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
 lam.high.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
+lam.high.fore.is0 = apply(lam.b.is0[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
+lam.high.fore.is1 = apply(lam.b.is1[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
+
 lam.med.all.2455 = apply(lam.b.2455[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 lam.med.all.5852 = apply(lam.b.5852[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.med.all.is0 = apply(lam.b.is0[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.med.all.is1 = apply(lam.b.is1[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 
 par(mfrow=c(1,1))
 #vioplot(lam[,-1],ylim=c(0,3),names=seq(1993,(1991+Time+Time.fore)))
@@ -153,25 +206,45 @@ boxplot(cbind(lam.b.2455[,1:(Time-1)],matrix(NA,30000,(Time.fore-1))),
 #     type="l",ylim=c(min(lam.low),max(lam.high)),
 #     lty=2,lwd=3,ylab=expression(lambda),
 #     xlab="Year")
-polygon(c(seq(1995,(1994+Time-1)), 
-          rev(seq(1995,(1994+Time-1)))),
-        c(lam.low,rev(lam.high)),
-        col=col.plot[1])
+#polygon(c(seq(1995,(1994+Time-1)), 
+#          rev(seq(1995,(1994+Time-1)))),
+#        c(lam.low,rev(lam.high)),
+#        col=col.plot[1])
 
 polygon(c(seq(Time,(Time+Time.fore-1)), 
           rev(seq(Time,(Time+Time.fore-1)))),
         c(lam.low.fore.2455,rev(lam.high.fore.2455)),
-          col=col.plot[2])
+          col=col.plot[3])
 polygon(c(seq(Time,(Time+Time.fore-1)), 
           rev(seq(Time,(Time+Time.fore-1)))),
-        c(lam.low.fore.5852,rev(lam.high.fore.2455)),
+        c(lam.low.fore.5852,rev(lam.high.fore.5852)),
+        col=col.plot[5])
+#in situ effects = 0
+polygon(c(seq(Time,(Time+Time.fore-1)), 
+          rev(seq(Time,(Time+Time.fore-1)))),
+        c(lam.low.fore.is0,rev(lam.high.fore.is0)),
+        col=col.plot[2])
+#in situ effects = -1
+polygon(c(seq(Time,(Time+Time.fore-1)), 
+          rev(seq(Time,(Time+Time.fore-1)))),
+        c(lam.low.fore.is1,rev(lam.high.fore.is1)),
         col=col.plot[5])
 
-
-lines(y=lam.med.all[Time:(Time+Time.fore-1)],
+lines(y=lam.med.all.5852[Time:(Time+Time.fore-1)],
       x=seq(Time,(Time+Time.fore-1)),lty=3,lwd=2)
+lines(y=lam.med.all.2455[Time:(Time+Time.fore-1)],
+      x=seq(Time,(Time+Time.fore-1)),lty=1,lwd=2)
+lines(y=lam.med.all.is0[Time:(Time+Time.fore-1)],
+      x=seq(Time,(Time+Time.fore-1)),lty=1,lwd=2)
+lines(y=lam.med.all.is1[Time:(Time+Time.fore-1)],
+      x=seq(Time,(Time+Time.fore-1)),lty=2,lwd=2)
+
 abline(h=1)
 
+legend("topright", 
+       legend=c("Current Management", "All In Situ PAIS"), pch=c(16,16),
+       bty="n",col=c(col.plot[3],col.plot[5]),
+       x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
 #Detection probability
 det.prob = out[,665]
@@ -199,9 +272,15 @@ abline(h=(1/(1+exp(-(mean(out[,657]))))))
 clim.cov.plot = out[,311]
 
 #yrs 1-24
-seq.plot = seq(min(c(bio5.ann,bio5.fore.cov)),
-               max(c(bio5.ann,bio5.fore.cov)),
+seq.plot = seq(min(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov)),
+               max(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov)),
                length.out=100)
+
+#demonstration of effect of -1 on prob of nest success
+demo.plot = 1/(1+exp(-(mean(out.is1[,973])+seq.plot*-1)))
+clim = seq(min(subset(hist.bioc.means,bioc == "bio5")$mean),39,length.out=100)
+plot(y = demo.plot, x = clim,
+     type= "l", ylab = "Prob. of Egg Success", xlab = "Max Temp")
 
 plot.low.incu <- plot.low.cor.pais <-
   plot.low.cor.spi <- plot.high.incu <-
