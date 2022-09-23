@@ -26,10 +26,10 @@ Time.fore = 45
 plot.year = 1993+Time+Time.fore
 
 ## Figure for abundance
-Nb.2455 = apply(out.2455[,1:(Time+Time.fore)],2,mean)
+Nb.2455 = apply(out.2455[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.2455 = apply(out.2455[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.2455 = apply(out.2455[,1:(Time+Time.fore)],2,quantile,0.975)
-Nb.5852 = apply(out.5852[,1:(Time+Time.fore)],2,mean)
+Nb.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,0.975)
 
@@ -130,16 +130,16 @@ legend("topleft",
        bty="n",col=c(col.plot[5],col.plot[3]),
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
-Nb.is0 = apply(out.is0[,1:(Time+Time.fore)],2,mean)
+Nb.is0 = apply(out.is0[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.is0 = apply(out.is0[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.is0 = apply(out.is0[,1:(Time+Time.fore)],2,quantile,0.975)
-Nb.is1 = apply(out.is1[,1:(Time+Time.fore)],2,mean)
+Nb.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,0.975)
-Nb.lis = apply(out.lis[,1:(Time+Time.fore)],2,mean)
+Nb.lis = apply(out.lis[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.lis = apply(out.lis[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.lis = apply(out.lis[,1:(Time+Time.fore)],2,quantile,0.975)
-Nb.noincu = apply(out.noincu[,1:(Time+Time.fore)],2,mean)
+Nb.noincu = apply(out.noincu[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.noincu = apply(out.noincu[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.noincu = apply(out.noincu[,1:(Time+Time.fore)],2,quantile,0.975)
 
@@ -209,9 +209,9 @@ for(t in 1:(Time+Time.fore-1)){
   #lam[,t] = n.tot[,t+1]/n.tot[,t]
   lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
   lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
-  lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
-  lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
-  lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
+  #lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
+  #lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
+  #lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
   lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
   }
 #remove Inf from lam
