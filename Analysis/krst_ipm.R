@@ -315,11 +315,13 @@ krst.ipm <- nimbleCode({
   #####number of nests per female per year####
   ##
   
-  for(t in 1:Time){  
-  n.fem[t] ~ dgamma(mean = mu.n.fem, sd = 1)
-  }
+  #for(t in 1:Time){  
+  #n.fem[t] ~ dgamma(mean = mu.n.fem, sd = 1)
+  #}
   
-  mu.n.fem ~ dunif(1,4)
+  mu.n.fem <- mean(n.fem[])
+  
+  #mu.n.fem ~ dunif(1,4)
   #sd.n.fem ~ dunif(0,10)
   
   #mu.n.fem <- 2
@@ -451,7 +453,8 @@ fem.dat = read.csv("hatch_sexes.csv")
 
 #forecasting
 Time = dim(dat)[2]
-Time.fore = 45
+#Time.fore = 45
+Time.fore = 79 #to 2100
 
 #prob.fem = c(fem.dat$prob_fem[-c(1:4)]/100,rep(NA,8))
 prob.fem = c(fem.dat$prob_fem[-c(1:5)]/100,rep(NA,6))
@@ -674,7 +677,7 @@ kilo.patrol.fore = c(kilo.patrol,rep(1,Time.fore))
 
 krst_con <- list(N = nrow(y), Time = ncol(dat), 
                  first=first,
-                 Time.fore = 45,
+                 Time.fore = Time.fore,
                  nest.mange = nest.mange,
                  year = year,
                  year.mean.idx = year.mean.idx,
@@ -835,7 +838,7 @@ out.current.5852 <- as.mcmc.list(out2.current585)
 
 #stopCluster(clus)
 
-save(out.current.5852, file="results_currentnm_5852.RData")
+save(out.current.5852, file="results_currentnm_5852_2100.RData")
 
 #### current NM, best case global change, insitu beta = -1 ####
 
@@ -850,7 +853,7 @@ bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means,
 
 krst_con_2455 <- list(N = nrow(y), Time = ncol(dat), 
                  first=first,
-                 Time.fore = 45,
+                 Time.fore = Time.fore,
                  nest.mange = nest.mange,
                  year = year,
                  year.mean.idx = year.mean.idx,
@@ -917,7 +920,7 @@ out2455 <- clusterEvalQ(clus2455,{
 
 out.current.2455 <- as.mcmc.list(out2455)
 
-save(out.current.2455,file = "results_currentnm_2455.RData")
+save(out.current.2455,file = "results_currentnm_2455_2100.RData")
 
 #### all in situ NM, best case global change, insitu beta = 0 ####
 
@@ -932,7 +935,7 @@ bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means,
 
 krst_con_2455_insitu0 <- list(N = nrow(y), Time = ncol(dat), 
                       first=first,
-                      Time.fore = 45,
+                      Time.fore = Time.fore,
                       nest.mange = nest.mange,
                       year = year,
                       year.mean.idx = year.mean.idx,
@@ -999,7 +1002,7 @@ out2455.is0 <- clusterEvalQ(clus2455.insitu0,{
 
 out.current.2455.is0 <- as.mcmc.list(out2455.is0)
 
-save(out.current.2455.is0,file = "results_currentnm_2455_is0.RData")
+save(out.current.2455.is0,file = "results_currentnm_2455_is0_2100.RData")
 
 #### all in situ NM, best case global change, insitu beta = -1 ####
 
@@ -1014,7 +1017,7 @@ bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means,
 
 krst_con_2455_insitu1 <- list(N = nrow(y), Time = ncol(dat), 
                               first=first,
-                              Time.fore = 45,
+                              Time.fore = Time.fore,
                               nest.mange = nest.mange,
                               year = year,
                               year.mean.idx = year.mean.idx,
@@ -1081,7 +1084,7 @@ out2455.is1 <- clusterEvalQ(clus2455.insitu1,{
 
 out.current.2455.is1 <- as.mcmc.list(out2455.is1)
 
-save(out.current.2455.is1,file = "results_currentnm_2455_is1.RData")
+save(out.current.2455.is1,file = "results_currentnm_2455_is1_2100.RData")
 
 #### close incubation, moderate global change, insitu beta = -1 ####
 
@@ -1096,7 +1099,7 @@ bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means,
 
 krst_con_2455_noincu <- list(N = nrow(y), Time = ncol(dat), 
                               first=first,
-                              Time.fore = 45,
+                              Time.fore = Time.fore,
                               nest.mange = nest.mange,
                               year = year,
                               year.mean.idx = year.mean.idx,
@@ -1163,7 +1166,7 @@ out2455.noincu <- clusterEvalQ(clus2455.noincu,{
 
 out.noincu.2455 <- as.mcmc.list(out2455.noincu)
 
-save(out.noincu.2455,file = "results_noincu_2455.RData")
+save(out.noincu.2455,file = "results_noincu_2455_2100.RData")
 
 #### in situ @ Closed Beach (2%) & Mansfield Channel (5% of nests), mod global change, insitu beta = -1 ####
 
@@ -1178,7 +1181,7 @@ bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means,
 
 krst_con_2455_lowis <- list(N = nrow(y), Time = ncol(dat), 
                               first=first,
-                              Time.fore = 45,
+                              Time.fore = Time.fore,
                               nest.mange = nest.mange,
                               year = year,
                               year.mean.idx = year.mean.idx,
@@ -1245,4 +1248,4 @@ out2455.lowis <- clusterEvalQ(clus2455.lowis,{
 
 out.lowis.2455 <- as.mcmc.list(out2455.lowis)
 
-save(out.lowis.2455,file = "results_lowis_2455.RData")
+save(out.lowis.2455,file = "results_lowis_2455_2100.RData")
