@@ -3,8 +3,8 @@ library(coda)
 library(vioplot)
 library(gplots)
 
-load("~/KRST/Analysis/results_currentnm_5852.RData")
-load("~/KRST/Analysis/results_currentnm_2455.RData")
+load("~/KRST/Analysis/results_currentnm_5852_2100.RData")
+load("~/KRST/Analysis/results_currentnm_2455_2100.RData")
 load("~/KRST/Analysis/results_lowis_2455.RData")
 load("~/KRST/Analysis/results_noincu_2455.RData")
 load("~/KRST/Analysis/results_currentnm_2455_is1.RData")
@@ -22,7 +22,7 @@ out.noincu =as.mcmc(rbind(out.noincu.2455[[1]], out.noincu.2455[[2]], out.noincu
 col.plot=viridis(5,alpha=.6)
 
 Time = 28
-Time.fore = 45
+Time.fore = 79
 plot.year = 1993+Time+Time.fore
 
 ## Figure for abundance
@@ -186,7 +186,7 @@ polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
         c(Nb.low.noincu,rev(Nb.high.noincu)),col=col.plot[5])
 
 legend("topleft", 
-       legend=c("Current Management", "No Incubation"), pch=c(16,16),
+       legend=c("Current Management", "All Corrals"), pch=c(16,16),
        bty="n",col = c(col.plot[3],col.plot[5]),
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
@@ -211,7 +211,7 @@ for(t in 1:(Time+Time.fore-1)){
   lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
   #lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
   #lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
-  #lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
+  lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
   lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
   }
 #remove Inf from lam
@@ -238,12 +238,12 @@ gm.lam.is0 = geo_mean(lam.b.is0[,29:72])
 gm.lam.lis = geo_mean(lam.b.lis[,29:72])
 gm.lam.noin = geo_mean(lam.b.noin[,29:72])
 
-boxplot(cbind(gm.lam.2455,gm.lam.5852,gm.lam.is1,
-              gm.lam.is0,gm.lam.lis,gm.lam.noin),
+boxplot(cbind(gm.lam.2455,gm.lam.5852,#gm.lam.is1,gm.lam.is0,
+              gm.lam.lis,gm.lam.noin),
         ylab = expression(lambda),
         names = c("Current,SSP2","Current,SSP5",
-                  "All In Situ -1","All In Situ 0",
-                  "Limited In Situ","No Incubation"),outline=FALSE)
+                  #"All In Situ -1","All In Situ 0",
+                  "Limited In Situ","All Corrals"),outline=FALSE)
 abline(h=1)
 
 zero.gm.2455 = length(which(gm.lam.2455==0))
@@ -335,9 +335,22 @@ lines(y=lam.med.all.noin[Time:(Time+Time.fore-1)],
 
 
 abline(h=1)
+lines(x=c(48,48),y=c(0,4))
+lines(x=c(106,106),y=c(0,4))
+
+#probability that lambda is > 1 at certain time periods
+#20 years in future
+prob.less.0=ecdf(lam.b.noin[,48]) #calculates empirical cum dist function for posterior; saves as function
+1-prob.less.0(.99)
+#2100
+prob.less.0=ecdf(lam.b.noin[,106]) #calculates empirical cum dist function for posterior; saves as function
+1-prob.less.0(0.99)
+
+text(x=53, y=4,labels=expression(P(lambda > 1) == 0.53))
+text(x=101, y=4, labels= expression(P(lambda > 1) == 0.60))
 
 legend("topright", 
-       legend=c("SSP2-4.5, 0.5 m", "SSP5-8.5, 2 m"), pch=c(16,16),
+       legend=c("SSP2-4.5, 0.5 m", "All Corrals"), pch=c(16,16),
        bty="n",col=c(col.plot[3],col.plot[5]),
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
