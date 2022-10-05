@@ -165,6 +165,7 @@ krst.ipm <- nimbleCode({
   
   for(t in 1:((Time+Time.fore)-1)){
     ln.mu.phi[t] ~ dnorm(mu.phi,var=sd.phi2)
+    #ln.mu.phi[t] ~ dnorm(mu.phi, sd = 1)
   }
   mu.phi ~ dnorm(2.2, sd = 1)
   sd.phi2 ~ dinvgamma(2,1)
@@ -715,7 +716,7 @@ krst_ini = function() list(
   psiBNB= runif(1,.7,.98),
   pB=runif(1,0.8,0.9), 
   z=zinit,
-  s.p1 = runif(1,.45,.55), 
+  s.p1 = runif(1,.51,.54), 
   N.nb = c(NA,rpois((Time+Time.fore-1),seq(2,200,length.out=(Time+Time.fore-1)))),
   N.b = c(NA,rpois((Time+Time.fore-1),seq(2,200,length.out=(Time+Time.fore-1)))),
   N.p1 = rpois((Time+Time.fore),seq(220,10000,length.out=(Time+Time.fore))),
@@ -1004,18 +1005,18 @@ out.current.2455.is0 <- as.mcmc.list(out2455.is0)
 
 save(out.current.2455.is0,file = "results_currentnm_2455_is0_2100.RData")
 
-#### all in situ NM, best case global change, insitu beta = .5 ####
+#### all in situ NM, worst case global change, insitu beta = 0.25 ####
 
-slr.scenario = "0.5 - MED"
+slr.scenario = "2.0 - MED"
 nest.mange.fore = c(0,0,24,0,1,75) #low,incu; low,cor,PAIS; low,cor,SPI; high,incu; high,cor; insitu
 bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means, 
                            clim.var = "bio5", 
-                           ssp.in = 245, 
+                           ssp.in = 585, 
                            slrp.summary=slrp.summary, 
                            sl.summary = sl.summary, 
                            slr.scenario = slr.scenario)
 
-krst_con_2455_insitu5 <- list(N = nrow(y), Time = ncol(dat), 
+krst_con_5852_insitu25 <- list(N = nrow(y), Time = ncol(dat), 
                               first=first,
                               Time.fore = Time.fore,
                               nest.mange = nest.mange,
@@ -1028,29 +1029,29 @@ krst_con_2455_insitu5 <- list(N = nrow(y), Time = ncol(dat),
                               nest.mange.fore = nest.mange.fore,
                               slr.cov=bio5.245.5$slr.cov,
                               slr.cov.fore = bio5.245.5$slr.cov.fore,
-                              insitu.temp = -0.5,
-                              insitu.slr = -0.5)
+                              insitu.temp = -0.25,
+                              insitu.slr = -0.25)
 
-clus2455.insitu5 = makeCluster(nc)
+clus5852.insitu25 = makeCluster(nc)
 
-clusterExport(clus2455.insitu5, c("krst.ipm","krst_ini",
+clusterExport(clus5852.insitu25, c("krst.ipm","krst_ini",
                                   "krst_data",
-                                  "krst_con_2455_insitu5"))
+                                  "krst_con_5852_insitu25"))
 
-for(j in seq_along(clus2455.insitu5)){
+for(j in seq_along(clus5852.insitu25)){
   set.seed(j)
   init <- krst_ini()
-  clusterExport(clus2455.insitu5[j],"init")
+  clusterExport(clus5852.insitu25[j],"init")
 }
 
 Sys.time()
 
-out.2455.is5 <- clusterEvalQ(clus2455.insitu5, {
+out.5852.is25 <- clusterEvalQ(clus5852.insitu25, {
   library(nimble)
   library(coda)
   model <- nimbleModel(code = krst.ipm, 
                        name = "krst.ipm",
-                       constants = krst_con_2455_insitu5,
+                       constants = krst_con_5852_insitu25,
                        data = krst_data, 
                        inits = init)
   Cmodel <- compileNimble(model)
@@ -1077,96 +1078,14 @@ out.2455.is5 <- clusterEvalQ(clus2455.insitu5, {
 
 Sys.time()
 
-out2455.is5 <- clusterEvalQ(clus2455.insitu5,{
+out5852.is25 <- clusterEvalQ(clus5852.insitu25,{
   CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
-out.current.2455.is5 <- as.mcmc.list(out2455.is5)
+out.current.5852.is25 <- as.mcmc.list(out5852.is25)
 
-save(out.current.2455.is5,file = "results_currentnm_2455_is5_2100.RData")
-
-#### all in situ NM, best case global change, insitu beta = 0 ####
-
-slr.scenario = "0.5 - MED"
-nest.mange.fore = c(0,0,24,0,1,75) #low,incu; low,cor,PAIS; low,cor,SPI; high,incu; high,cor; insitu
-bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means, 
-                           clim.var = "bio5", 
-                           ssp.in = 245, 
-                           slrp.summary=slrp.summary, 
-                           sl.summary = sl.summary, 
-                           slr.scenario = slr.scenario)
-
-krst_con_2455_insitu25 <- list(N = nrow(y), Time = ncol(dat), 
-                              first=first,
-                              Time.fore = Time.fore,
-                              nest.mange = nest.mange,
-                              year = year,
-                              year.mean.idx = year.mean.idx,
-                              N.nest = length(J.ind),
-                              may.tmax.ann = bio5.245.5$bio5.ann[4:31],
-                              clim.cov = bio5.245.5$bio5.out,
-                              clim.cov.fore = bio5.245.5$bio5.fore.cov,
-                              nest.mange.fore = nest.mange.fore,
-                              slr.cov=bio5.245.5$slr.cov,
-                              slr.cov.fore = bio5.245.5$slr.cov.fore,
-                              insitu.temp = -.25,
-                              insitu.slr = -.25)
-
-clus2455.insitu25 = makeCluster(nc)
-
-clusterExport(clus2455.insitu25, c("krst.ipm","krst_ini",
-                                  "krst_data",
-                                  "krst_con_2455_insitu25"))
-
-for(j in seq_along(clus2455.insitu25)){
-  set.seed(j)
-  init <- krst_ini()
-  clusterExport(clus2455.insitu25[j],"init")
-}
-
-Sys.time()
-
-out.2455.is25 <- clusterEvalQ(clus2455.insitu25, {
-  library(nimble)
-  library(coda)
-  model <- nimbleModel(code = krst.ipm, 
-                       name = "krst.ipm",
-                       constants = krst_con_2455_insitu25,
-                       data = krst_data, 
-                       inits = init)
-  Cmodel <- compileNimble(model)
-  modelConf <- configureMCMC(model)
-  #modelConf$addMonitors(params)
-  modelConf$addMonitors(c("phi","N.i","N.b","pB","N.nb",
-                          "f","eps.imm"))
-  #configureRJ(modelConf,
-  #            targetNodes = 'beta',
-  #            indicatorNodes = 'indA',
-  #            control = list(mean=0, scale = 2))
-  modelMCMC <- buildMCMC(modelConf)
-  CmodelMCMC <- compileNimble(modelMCMC, 
-                              project = model)
-  #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
-  #return(as.mcmc(out1))
-  CmodelMCMC$run(100000,reset=TRUE, resetMV=TRUE)
-  return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
-})
-
-#out.mcmc <- as.mcmc.list(out) 
-
-#stopCluster(clus)
-
-Sys.time()
-
-out2455.is25 <- clusterEvalQ(clus2455.insitu25,{
-  CmodelMCMC$run(100000,thin=10,reset=FALSE, resetMV=TRUE)
-  return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
-})
-
-out.current.2455.is25 <- as.mcmc.list(out2455.is25)
-
-save(out.current.2455.is25,file = "results_currentnm_2455_is25_2100.RData")
+save(out.current.5852.is25,file = "results_5852_is25_2100.RData")
 
 
 #### all in situ NM, best case global change, insitu beta = -1 ####
@@ -1278,6 +1197,11 @@ krst_con_2455_noincu <- list(N = nrow(y), Time = ncol(dat),
                               insitu.temp = -1,
                               insitu.slr = -1)
 
+krst.model <- nimbleModel(code = krst.ipm,
+                          constants = krst_con_2455_noincu,
+                          data = krst_data,
+                          inits = krst_ini())
+
 clus2455.noincu = makeCluster(nc)
 
 clusterExport(clus2455.noincu, c("krst.ipm","krst_ini",
@@ -1314,11 +1238,11 @@ out.2455.noincu <- clusterEvalQ(clus2455.noincu, {
                               project = model)
   #out1 <- runMCMC(CmodelMCMC, niter=15000, nburnin=14000)
   #return(as.mcmc(out1))
-  CmodelMCMC$run(10000,reset=TRUE, resetMV=TRUE)
+  CmodelMCMC$run(15000,reset=TRUE, resetMV=TRUE)
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
-out.mcmc <- as.mcmc.list(out.2455.noincu) 
+#out.mcmc <- as.mcmc.list(out) 
 
 #stopCluster(clus)
 
