@@ -9,12 +9,18 @@ load("~/KRST/Analysis/results_lowis_2455.RData")
 load("~/KRST/Analysis/results_noincu_2455.RData")
 load("~/KRST/Analysis/results_currentnm_2455_is1.RData")
 load("~/KRST/Analysis/results_currentnm_2455_is0.RData")
+load("~/KRST/Analysis/results_5852_is25_2100.RData")
+load("~/KRST/Analysis/results_currentnm_2455_is5_2100.RData")
+load("~/KRST/Analysis/results_currentnm_2455_is25_2100.RData")
 
 out.2455 = as.mcmc(rbind(out.current.2455[[1]], out.current.2455[[2]], out.current.2455[[3]]))
 out.5852 = as.mcmc(rbind(out.current.5852[[1]], out.current.5852[[2]], out.current.5852[[3]]))
 
 out.is0 = as.mcmc(rbind(out.current.2455.is0[[1]], out.current.2455.is0[[2]], out.current.2455.is0[[3]]))
 out.is1 =as.mcmc(rbind(out.current.2455.is1[[1]], out.current.2455.is1[[2]], out.current.2455.is1[[3]]))
+out.is255 = as.mcmc(rbind(out.current.5852.is25[[1]], out.current.5852.is25[[2]], out.current.5852.is25[[3]]))
+out.is252 = as.mcmc(rbind(out.current.2455.is25[[1]], out.current.2455.is25[[2]], out.current.2455.is25[[3]]))
+out.is5 = as.mcmc(rbind(out.current.2455.is5[[1]], out.current.2455.is5[[2]], out.current.2455.is5[[3]]))
 
 out.lis =as.mcmc(rbind(out.lowis.2455[[1]], out.lowis.2455[[2]], out.lowis.2455[[3]]))
 out.noincu =as.mcmc(rbind(out.noincu.2455[[1]], out.noincu.2455[[2]], out.noincu.2455[[3]]))
@@ -136,6 +142,17 @@ Nb.high.is0 = apply(out.is0[,1:(Time+Time.fore)],2,quantile,0.975)
 Nb.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.is1 = apply(out.is1[,1:(Time+Time.fore)],2,quantile,0.975)
+Nb.is255 = apply(out.is255[,1:(Time+Time.fore)],2,quantile,.5)
+Nb.low.is255 = apply(out.is255[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.is255 = apply(out.is255[,1:(Time+Time.fore)],2,quantile,0.975)
+Nb.is252 = apply(out.is252[,1:(Time+Time.fore)],2,quantile,.5)
+Nb.low.is252 = apply(out.is252[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.is252 = apply(out.is252[,1:(Time+Time.fore)],2,quantile,0.975)
+Nb.is5 = apply(out.is5[,1:(Time+Time.fore)],2,quantile,.5)
+Nb.low.is5 = apply(out.is5[,1:(Time+Time.fore)],2,quantile,0.025)
+Nb.high.is5 = apply(out.is5[,1:(Time+Time.fore)],2,quantile,0.975)
+
+
 Nb.lis = apply(out.lis[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.lis = apply(out.lis[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.lis = apply(out.lis[,1:(Time+Time.fore)],2,quantile,0.975)
@@ -209,6 +226,9 @@ lam.b.2455 = matrix(NA,30000,(Time+Time.fore-1))
 lam.b.5852 = matrix(NA,30000,(Time+Time.fore-1))
 lam.b.is0 = matrix(NA,30000, (Time+Time.fore-1))
 lam.b.is1 = matrix(NA,30000, (Time+Time.fore-1))
+lam.b.is255 = matrix(NA,30000, (Time+Time.fore-1))
+lam.b.is252 = matrix(NA,30000, (Time+Time.fore-1))
+lam.b.is5 = matrix(NA,30000, (Time+Time.fore-1))
 lam.b.lis = matrix(NA,30000, (Time+Time.fore-1))
 lam.b.noin = matrix(NA,30000, (Time+Time.fore-1))
 
@@ -218,18 +238,24 @@ lam.b.noin = matrix(NA,30000, (Time+Time.fore-1))
 
 for(t in 1:(Time+Time.fore-1)){ 
   #lam[,t] = n.tot[,t+1]/n.tot[,t]
-  lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
-  lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
+  #lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
+  #lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
   #lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
-  #lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
+#  lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
+  lam.b.is255[,t] = out.is255[,t+1]/out.is255[,t]
+  lam.b.is252[,t] = out.is252[,t+1]/out.is252[,t]
+  lam.b.is5[,t] = out.is5[,t+1]/out.is5[,t]
   #lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
-  lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
+ # lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
   }
 #remove Inf from lam
 lam.b.2455[!is.finite(lam.b.2455)] = NA
 lam.b.5852[!is.finite(lam.b.5852)] = NA
 lam.b.is0[!is.finite(lam.b.is0)] = NA
 lam.b.is1[!is.finite(lam.b.is1)]= NA
+lam.b.is255[!is.finite(lam.b.is255)]=0
+lam.b.is252[!is.finite(lam.b.is252)]=0
+lam.b.is5[!is.finite(lam.b.is5)]=0
 lam.b.lis[!is.finite(lam.b.lis)] = NA
 lam.b.noin[!is.finite(lam.b.noin)] = NA
 
@@ -246,8 +272,16 @@ gm.lam.2455 = geo_mean(lam.b.2455[,29:72])
 gm.lam.5852 = geo_mean(lam.b.5852[,29:72])
 gm.lam.is1 = geo_mean(lam.b.is1[,29:72])
 gm.lam.is0 = geo_mean(lam.b.is0[,29:72])
+gm.lam.is255 = geo_mean(lam.b.is255[,29:106])
+gm.lam.is252=geo_mean(lam.b.is252[,29:106])
+gm.lam.is5=geo_mean(lam.b.is5[,29:106])
 gm.lam.lis = geo_mean(lam.b.lis[,29:72])
 gm.lam.noin = geo_mean(lam.b.noin[,29:72])
+
+#add zeros to infinite values
+gm.lam.is255[!is.finite(gm.lam.is255)] = 0
+gm.lam.is252[!is.finite(gm.lam.is252)] = 0
+gm.lam.is5[!is.finite(gm.lam.is5)] = 0
 
 boxplot(cbind(gm.lam.2455,gm.lam.5852,gm.lam.is1,
               gm.lam.is0,gm.lam.lis,gm.lam.noin),
@@ -270,6 +304,8 @@ lam.low.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.02
 lam.low.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.is0 = apply(lam.b.is0[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.is1 = apply(lam.b.is1[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.low.fore.is255 = apply(lam.b.is255[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.low.fore.is252 = apply(lam.b.is252[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.lis = apply(lam.b.lis[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.noin = apply(lam.b.noin[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 
@@ -277,6 +313,8 @@ lam.high.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.9
 lam.high.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
 lam.high.fore.is0 = apply(lam.b.is0[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.is1 = apply(lam.b.is1[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
+lam.high.fore.is255 = apply(lam.b.is255[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
+lam.high.fore.is252 = apply(lam.b.is252[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.lis = apply(lam.b.lis[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.noin = apply(lam.b.noin[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 
@@ -284,6 +322,9 @@ lam.med.all.2455 = apply(lam.b.2455[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=
 lam.med.all.5852 = apply(lam.b.5852[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 lam.med.all.is0 = apply(lam.b.is0[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 lam.med.all.is1 = apply(lam.b.is1[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.med.all.is255 = apply(lam.b.is255[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.med.all.is252 = apply(lam.b.is252[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
+lam.med.all.is5 = apply(lam.b.is5[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 lam.med.all.lis = apply(lam.b.lis[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 lam.med.all.noin = apply(lam.b.noin[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=TRUE)
 
@@ -347,6 +388,21 @@ lines(y=lam.med.all.noin[Time:(Time+Time.fore-1)],
 
 abline(h=1)
 
+lines(x=c(2042,2042),y=c(0,4))
+lines(x=c(106,106),y=c(0,4))
+
+#probability that lambda is > 1 at certain time periods
+#20 years in future
+prob.less.0 = ecdf(lam.b.is5[,48])
+1-prob.less.0(.99)
+
+#2100
+prob.less.0=ecdf(lam.b.is5[,106])
+1-prob.less.0(.99)
+
+text(x=53,y=4,labels=expression(P(lambda > 1) == 0.53))
+text(x=101,y=4,lables=expression(P(lambda > 1) == 0.60))
+
 legend("topright", 
        legend=c("SSP2-4.5, 0.5 m", "SSP5-8.5, 2 m"), pch=c(16,16),
        bty="n",col=c(col.plot[3],col.plot[5]),
@@ -376,6 +432,20 @@ abline(h=(1/(1+exp(-(mean(out[,657]))))))
 ##### covs plots ####
 #climate effects
 clim.cov.plot = out[,311]
+
+bio5 = subset(hist.bioc.means,bioc == "bio5")
+bio5.fore = subset(bioc.forecast,bioc=="bio5")
+ssp2 = subset(bio5.fore, ssp == "245")
+ssp5 = subset(bio5.fore,ssp == "585")
+
+#plot of climate covariate past and future
+plot(c(bio5$mean[4:31],rep(NA,79)),x=seq(1994,2100),type="l",
+     xlab = "Year",ylab="Max Temperature (C)",ylim=c(31,42))
+lines(rep(ssp2$mean,each=20),x=seq(2021,2100),col=col.plot[3])
+lines(rep(ssp5$mean,each=20),x=seq(2021,2100),col=col.plot[2])
+
+legend("topleft",legend=c("SSP2","SSP5"),pch=c(16,16),
+       col=c(col.plot[3],col.plot[2]))
 
 #yrs 1-24
 seq.plot = seq(min(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov)),
