@@ -3,7 +3,7 @@ library(coda)
 library(vioplot)
 library(gplots)
 
-load("~/KRST/Analysis/results_currentnm_5852.RData")
+load("~/KRST/Analysis/results_currentnm_5852_2100.RData")
 load("~/KRST/Analysis/results_currentnm_2455_2100.RData")
 load("~/KRST/Analysis/results_lowis_2455.RData")
 load("~/KRST/Analysis/results_noincu_2455.RData")
@@ -39,12 +39,15 @@ Nb.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,.5)
 Nb.low.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,0.025)
 Nb.high.5852 = apply(out.5852[,1:(Time+Time.fore)],2,quantile,0.975)
 
-imm = apply(out.2455[,(Time+Time.fore+1):(2*(Time+Time.fore))],2,quantile,.5)
-imm.l = apply(out.2455[,(Time+Time.fore+1):(2*(Time+Time.fore))],2,quantile,0.025)
-imm.h = apply(out.2455[,(Time+Time.fore+1):(2*(Time+Time.fore))],2,quantile,0.975)
-Nnb = apply(out[,(2*(Time+Time.fore)+1):(3*(Time+Time.fore))],2,mean)
-Nnb.low = apply(out[,(2*(Time+Time.fore)+1):(3*(Time+Time.fore))],2,quantile,0.025)
-Nnb.high = apply(out[,(2*(Time+Time.fore)+1):(3*(Time+Time.fore))],2,quantile,0.975)
+name.imm.low = which(varnames(out.5852)=="N.i[1]")
+name.imm.high = which(varnames(out.5852)=="N.i[107]")
+
+imm = apply(out.5852[,(name.imm.low):(name.imm.high)],2,quantile,.5)
+imm.l = apply(out.5852[,(name.imm.low):(name.imm.high)],2,quantile,0.025)
+imm.h = apply(out.5852[,(name.imm.low):(name.imm.high)],2,quantile,0.975)
+Nnb = apply(out.5852[,which(varnames(out.5852)=="N.nb[1]"):(which(varnames(out.5852)=="N.nb[107]"))],2,mean)
+Nnb.low = apply(out.5852[,which(varnames(out.5852)=="N.nb[1]"):which(varnames(out.5852)=="N.nb[107]")],2,quantile,0.025)
+Nnb.high = apply(out.5852[,which(varnames(out.5852)=="N.nb[1]"):which(varnames(out.5852)=="N.nb[107]")],2,quantile,0.975)
 #Np1 = apply(out[,63:93],2,mean)
 #Np2 = apply(out[,94:124],2,mean)
 #Np3 = apply(out[,125:155],2,mean)
@@ -54,14 +57,45 @@ Nnb.high = apply(out[,(2*(Time+Time.fore)+1):(3*(Time+Time.fore))],2,quantile,0.
 #Np7 = apply(out[,249:279],2,mean)
 
 #Np = rowSums(cbind(Np1,Np2,Np3,Np4,Np5,Np6,Np7))
-Nad = rowSums(cbind(Nb,Nnb))
+Nad = rowSums(cbind(Nb.5852,Nnb))
 
 Nad.low <- Nad.high <- rep(NA,(Time+Time.fore))
 for(i in 1:(Time+Time.fore)){
-Nad.low[i]=quantile(rowSums(cbind(out[,i],out[,i+(2*(Time+Time.fore))])),0.025)
-Nad.high[i] =quantile(rowSums(cbind(out[,i],out[,i+(2*(Time+Time.fore))])),0.975)}
+Nad.low[i]=quantile(rowSums(cbind(out.5852[,i],out.5852[,i+(2*(Time+Time.fore))])),0.025)
+Nad.high[i] =quantile(rowSums(cbind(out.5852[,i],out.5852[,i+(2*(Time+Time.fore))])),0.975)}
 
 par(mfrow=c(2,1))
+
+## Plot of total TX adults (breed & nb) to current"
+
+plot(Nad[1:Time],x=seq(1994,(1993+Time)), type="l", 
+     ylab = "Abundance",
+     xlab= "",col=col.plot[1],ylim=c(0,max(Nad.high[1:28])))
+polygon(c(seq(1994,2021),rev(seq(1994,2021))),
+        c(Nad.low[1:28],rev(Nad.high[1:28])),col=col.plot[1])
+mtext("A) Total Abundance", side=3, line=.5, adj=0)
+#axis(side=1, at=seq(1994,2021), labels=FALSE)
+
+plot(Nb.5852[1:28], x = seq(1994,2021), type="l", ylab="Abundance",
+     xlab="Year",ylim=c(0,max(Nnb.high[1:28])))
+polygon(c(seq(1994,2021), rev(seq(1994,2021))),
+        c(Nb.low.5852[1:28],rev(Nb.high.5852[1:28])),col=col.plot[2])
+
+
+lines(Nnb[1:28], x= seq(1994,2021),type="l")
+polygon(c(seq(1994,2021),rev(seq(1994,2021))),
+        c(Nnb.low[1:28],rev(Nnb.high[1:28])),col=col.plot[3])
+
+legend("topleft", 
+       legend=c("Breeders","Non-Breeders"), pch=c(16,16),
+       bty="n",col=c(col.plot[2],col.plot[3]),
+       x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
+
+mtext("B) Abundance of Non-breeders and Breeders", side=3, line=.5, adj=0)
+dev.print(tiff,"tx_ad.tiff",res=600,width=9,units="in")
+
+
+#forecast adults
 
 plot(Nad,x=seq(1994,plot.year), type="l", ylab = "Abundance", 
      xlab= "Year",col=col.plot[1],ylim=c(0,max(Nad.high)))
@@ -70,14 +104,14 @@ polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
 #mtext("A) Total Abundance", side=3, line=.5, adj=0)
 #axis(side=1, at=seq(1991,2021), labels=FALSE)
 
-plot(Nb, x = seq(1994,plot.year), type="l", ylab="Abundance",
-     xlab="Year",ylim=c(0,max(Nb.high)))
+plot(Nb.5852, x = seq(1994,plot.year), type="l", ylab="Abundance",
+     xlab="Year",ylim=c(0,max(Nb.high.5852)))
 polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
-        c(Nb.low,rev(Nb.high)),col=col.plot[2])
+        c(Nb.low.5852,rev(Nb.high.5852)),col=col.plot[2])
 
 
-lines(Nnb, x= seq(1991,plot.year),type="l")
-polygon(c(seq(1991,plot.year),rev(seq(1991,plot.year))),
+lines(Nnb, x= seq(1994,plot.year),type="l")
+polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
         c(Nnb.low,rev(Nnb.high)),col=col.plot[3])
 
 #mtext("B) Breeders and Non-Breeders", side=3, line=.5, adj=0)
@@ -239,12 +273,12 @@ lam.b.noin = matrix(NA,30000, (Time+Time.fore-1))
 for(t in 1:(Time+Time.fore-1)){ 
   #lam[,t] = n.tot[,t+1]/n.tot[,t]
   #lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
-  #lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
+  lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
   #lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
 #  lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
-  lam.b.is255[,t] = out.is255[,t+1]/out.is255[,t]
+  #lam.b.is255[,t] = out.is255[,t+1]/out.is255[,t]
   lam.b.is252[,t] = out.is252[,t+1]/out.is252[,t]
-  lam.b.is5[,t] = out.is5[,t+1]/out.is5[,t]
+  #lam.b.is5[,t] = out.is5[,t+1]/out.is5[,t]
   #lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
  # lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
   }
@@ -268,15 +302,15 @@ geo_mean <- function(data){
   return(gm)
   }
 
-gm.lam.2455 = geo_mean(lam.b.2455[,29:72])
-gm.lam.5852 = geo_mean(lam.b.5852[,29:72])
-gm.lam.is1 = geo_mean(lam.b.is1[,29:72])
-gm.lam.is0 = geo_mean(lam.b.is0[,29:72])
+gm.lam.2455 = geo_mean(lam.b.2455[,29:106])
+gm.lam.5852 = geo_mean(lam.b.5852[,29:106])
+gm.lam.is1 = geo_mean(lam.b.is1[,29:106])
+gm.lam.is0 = geo_mean(lam.b.is0[,29:106])
 gm.lam.is255 = geo_mean(lam.b.is255[,29:106])
 gm.lam.is252=geo_mean(lam.b.is252[,29:106])
 gm.lam.is5=geo_mean(lam.b.is5[,29:106])
-gm.lam.lis = geo_mean(lam.b.lis[,29:72])
-gm.lam.noin = geo_mean(lam.b.noin[,29:72])
+gm.lam.lis = geo_mean(lam.b.lis[,29:106])
+gm.lam.noin = geo_mean(lam.b.noin[,29:106])
 
 #add zeros to infinite values
 gm.lam.is255[!is.finite(gm.lam.is255)] = 0
@@ -409,7 +443,7 @@ legend("topright",
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
 #Detection probability
-det.prob = out[,665]
+det.prob = out.5852[,1415]
 plot(density(det.prob))
 
 boxplot(det.prob,outline=FALSE,
@@ -418,16 +452,18 @@ boxplot(det.prob,outline=FALSE,
         col="white",ylim = c(.5,1))
 
 #transition probabilities
-boxplot(out[,711],out[,712],
+boxplot(out.5852[,1522],out.5852[,1523],
         names=c("Breeder to Non","Non to Breeder"),
         outline=FALSE)
 
-#survival rates through time
-#666-710
-phi.plot = as.matrix(out[,666:710])
+#### survival rates through time ####
+
+phi.plot = as.matrix(out[,1416:1521])
 boxplot(phi.plot,names=seq(1992,(1990+Time+Time.fore)),
         ylab = "Adult Survival",outline=FALSE)
-abline(h=(1/(1+exp(-(mean(out[,657]))))))
+abline(h=(1/(1+exp(-(mean(out.5852[,1407]))))))
+
+dev.print(tiff,"ad_surv.tiff",res=600,width=9,units="in")
 
 ##### covs plots ####
 #climate effects
@@ -453,10 +489,18 @@ seq.plot = seq(min(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov)),
                length.out=100)
 
 #demonstration of effect of -1 on prob of nest success
-demo.plot = 1/(1+exp(-(mean(out.is1[,973])+seq.plot*-1)))
-clim = seq(min(subset(hist.bioc.means,bioc == "bio5")$mean),39,length.out=100)
-plot(y = demo.plot, x = clim,
-     type= "l", ylab = "Prob. of Egg Success", xlab = "Max Temp")
+demo.plot = matrix(NA,30000,100)
+for(j in 1:100){
+demo.plot[,j] = 1/(1+exp(-(out.is252[,1414]+out.is252[,1082]*seq.plot[j])))
+}
+clim = seq(min(subset(hist.bioc.means,bioc == "bio5")$mean),41,length.out=100)
+plot(y = apply(demo.plot,2,quantile,.5), x = clim,
+     type= "l", ylab = "Prob. of Egg Success", xlab = "Max Temp",
+     ylim = c(0,1))
+lines(y = apply(demo.plot,2,quantile,.025), x = clim,
+      lty = 2)
+lines(y = apply(demo.plot,2,quantile,.975), x = clim,
+      lty = 2)
 
 plot.low.incu <- plot.low.cor.pais <-
   plot.low.cor.spi <- plot.high.incu <-
@@ -582,13 +626,14 @@ mtext("Egg Success", side=2, line=1.5,
 
 
 #nest management effects
-#659-664 - not correct names below!
-good.corr.pais.plot = 1/(1+exp(-(out[,324])))
-good.corr.spi.plot = 1/(1+exp(-(out[,325])))
-good.incu.plot = 1/(1+exp(-(out[,323])))
-ngood.corr.plot = 1/(1+exp(-(out[,327])))
-ngood.incu.plot = 1/(1+exp(-(out[,326])))
-insitu.plot = 1/(1+exp(-(out[,328])))
+#order: "Low,Incu","low,Cor,PAIS", "Low,Cor,SPI",
+# "High,Incu","High,Cor","In situ")
+good.corr.pais.plot = 1/(1+exp(-(out.5852[,1410])))
+good.corr.spi.plot = 1/(1+exp(-(out.5852[,1411])))
+good.incu.plot = 1/(1+exp(-(out.5852[,1409])))
+ngood.corr.plot = 1/(1+exp(-(out.5852[,1413])))
+ngood.incu.plot = 1/(1+exp(-(out.5852[,1412])))
+insitu.plot = 1/(1+exp(-(out.5852[,1414])))
 
 par(mfrow = c(1,1))
 
@@ -597,110 +642,9 @@ boxplot(good.corr.pais.plot,good.corr.spi.plot,
         ngood.incu.plot,insitu.plot,
         names = c("Low,Cor,PAIS", "Low,Cor,SPI",
                   "Low,Incu",
-                  "High,Incu","High,Cor","In situ"),
-        ylab = "Survival Probability")
+                  "High,Cor","High,Incu","In situ"),
+        ylab = "Survival Probability",outline = FALSE)
 
-points(x=5,y=0.63,col="red",pch=16)
+#points(x=5,y=0.63,col="red",pch=16)
+dev.print(tiff,"nest_mange.tiff",res=600,width=9,units="in")
 
-#Plots of interactions
-
-#betas for each management*may tmax
-betas = cbind(out[,311:316])
-vioplot(betas, names = c("LR,PAIS","LR,SPI",
-                               "LR,Incu","HR,Incu",
-                               "HR,Cor","In situ"))
-abline(h = 0)
-
-#good spi and good pais w/ sea level rise
-seq.plot = seq(min(slr[25:31]),
-                     max(slr[25:31]),
-                     length.out=100)
-
-plot.good.corr.spi <- plot.good.corr.pais <- 
-  plot.good.incu <- plot.ngood.corr <- 
-  plot.ngood.incu <- matrix(NA,nrow=150000,ncol=100)
-
-for(j in 1:100){
-  #low precip
-  plot.good.corr.spi[,j]=1/(1+(exp(-(out[,351] + 
-                  (out[,394]*seq.plot[j]) +
-                  (out[,345]) + 
-                  (out[,346]*seq.plot[j])))))
-  
-  plot.good.corr.pais[,j]=1/(1+(exp(-(out[,351] + 
-                  (out[,394]*seq.plot[j]) +
-                  (out[,343]) + 
-                  (out[,344]*seq.plot[j])))))
-  
-  plot.good.incu[,j] = 1/(1+(exp(-(out[,351] + 
-                  (out[,394]*seq.plot[j]) +
-                  (out[,347]) + 
-                  (out[,348]*seq.plot[j])))))
-  
-  plot.ngood.corr[,j] = 1/(1+(exp(-(out[,351] + 
-                  (out[,394]*seq.plot[j]) +
-                  (out[,354]) + 
-                  (out[,355]*seq.plot[j])))))
-  
-  plot.ngood.incu[,j] = 1/(1+(exp(-(out[,351] + 
-                  (out[,394]*seq.plot[j])))))
-  }
-
-plot.good.spi2.low = apply(plot.good.corr.spi, 2, function(x) quantile(x, probs = c(0.025)))
-plot.good.spi2 = apply(plot.good.corr.spi, 2, function(x) quantile(x, probs = c(0.5)))
-plot.good.spi2.high = apply(plot.good.corr.spi, 2, function(x) quantile(x, probs = c(0.975)))
-
-plot.pais2.low = apply(plot.good.corr.pais, 2, function(x) quantile(x, probs = c(0.025)))
-plot.pais2 = apply(plot.good.corr.pais, 2, function(x) quantile(x, probs = c(0.5)))
-plot.pais2.high = apply(plot.good.corr.pais, 2, function(x) quantile(x, probs = c(0.975)))
-
-plot.good.incu2.low = apply(plot.good.incu,2,function(x) quantile(x,probs = 0.025))
-plot.good.incu2 = apply(plot.good.incu,2,function(x) quantile(x,probs = 0.5))
-plot.good.incu2.high = apply(plot.good.incu,2,function(x) quantile(x,probs = 0.975))
-
-plot.ngood.corr2.low = apply(plot.ngood.corr,2,function(x) quantile(x,probs = 0.025))
-plot.ngood.corr2 = apply(plot.ngood.corr,2,function(x) quantile(x,probs = 0.5))
-plot.ngood.corr2.high = apply(plot.ngood.corr,2,function(x) quantile(x,probs = 0.975))
-
-plot.ngood.incu2.low = apply(plot.ngood.incu,2,function(x) quantile(x,probs = 0.025))
-plot.ngood.incu2 = apply(plot.ngood.incu,2,function(x) quantile(x,probs = 0.5))
-plot.ngood.incu2.high = apply(plot.ngood.incu,2,function(x) quantile(x,probs = 0.975))
-
-cov.mean = mean(sl.summary$msl.mean)
-cov.sd = sd(sl.summary$msl.mean)
-plot.tmp = (seq.plot*cov.sd)+cov.mean 
-plot.x = seq(min(plot.tmp),max(plot.tmp),length.out = 100)
-
-col.plot = viridis(5)
-
-plot(plot.good.spi2,type="l",x=plot.x,cex=1.2,
-     ylim=c(0,1),xaxt="n",yaxt="n",col=col.plot[1],
-     xlab="SLR",ylab="Nest success",
-     lwd=2)
-lines(plot.good.spi2.low,lty=2,x=plot.x,col=col.plot[1],lwd=2)
-lines(plot.good.spi2.high,lty=2,x=plot.x,col=col.plot[1],lwd=2)
-
-lines(plot.pais2,type="l",x=plot.x,col=col.plot[2],lwd=2)
-lines(plot.pais2.low,lty=2,x=plot.x,col=col.plot[2],lwd=2)
-lines(plot.pais2.high,lty=2,x=plot.x,col=col.plot[2],lwd=2)
-
-lines(plot.good.incu2,type="l",x=plot.x,col=col.plot[3],lwd=2)
-lines(plot.good.incu2.high,lty=2,x=plot.x,col=col.plot[3],lwd=2)
-lines(plot.good.incu2.low,lty=2,x=plot.x,col=col.plot[3],lwd=2)
-
-lines(plot.ngood.corr2,type="l",x=plot.x,col=col.plot[4],lwd=2)
-lines(plot.ngood.corr2.low,lty=2,x=plot.x,col=col.plot[4],lwd=2)
-lines(plot.ngood.corr2.high,lty=2,x=plot.x,col=col.plot[4],lwd=2)
-
-lines(plot.ngood.incu2,type="l",x=plot.x,col=col.plot[5],lwd=2)
-lines(plot.ngood.incu2.low,lty=2,x=plot.x,col=col.plot[5],lwd=2)
-lines(plot.ngood.incu2.high,lty=2,x=plot.x,col=col.plot[5],lwd=2)
-
-axis(side=1, at=NULL, labels=TRUE)
-axis(side=2, labels=TRUE, las=1)	# will add tick marks in every case, but labels only on the first panel
-legend("bottomright",title="Management Type",
-       legend=c("SPI Good, Cor","PAIS Good, Cor",
-                "Good, Incu","Not Good, Cor",
-                "Not Good, Incu"), 
-       pch=16,col=col.plot,bty="n",
-       x.intersp=0.7, y.intersp=1.0, cex=1, pt.cex=1)

@@ -475,15 +475,15 @@ n.fem[1] <- 1
 
 #E = (tx_nest_dat$eggs_intact[-c(1:4,25:31)] + tx_nest_dat$eggs_broken[-c(1:4,25:31)])
 #J = tx_nest_dat$hatch_release[-c(1:4,25:31)]
-E = (tx_nest_dat$eggs_intact[-c(1:7,25:31)] + tx_nest_dat$eggs_broken[-c(1:7,25:31)])
-J = tx_nest_dat$hatch_release[-c(1:7,25:31)]
+E = (tx_nest_dat$eggs_intact[-c(1:7,29:35)] + tx_nest_dat$eggs_broken[-c(1:7,29:35)])
+J = tx_nest_dat$hatch_release[-c(1:7,29:35)]
 
 
 #j.e = J/E
 #j.e[2:3] = NA #beta data can't include 0
 #E.R = E/tx_nest_dat$nests[-c(1:4,25:31)]
 #E.R[2:3] <- 1
-E.R = E/tx_nest_dat$nests[-c(1:7,25:31)]
+E.R = E/tx_nest_dat$nests[-c(1:7,29:35)]
 
 incu = nest.pro$incubation.type
 #incu = incu[-which(incu=="S")]
