@@ -5,10 +5,10 @@ library(gplots)
 
 load("~/KRST/Analysis/results_currentnm_5852_2100.RData")
 load("~/KRST/Analysis/results_currentnm_2455_2100.RData")
-load("~/KRST/Analysis/results_lowis_2455.RData")
-load("~/KRST/Analysis/results_noincu_2455.RData")
-load("~/KRST/Analysis/results_currentnm_2455_is1.RData")
-load("~/KRST/Analysis/results_currentnm_2455_is0.RData")
+load("~/KRST/Analysis/results_lowis_2455_2100.RData")
+load("~/KRST/Analysis/results_noincu_2455_2100.RData")
+load("~/KRST/Analysis/results_currentnm_2455_is1_2100.RData")
+load("~/KRST/Analysis/results_currentnm_2455_is0_2100.RData")
 load("~/KRST/Analysis/results_5852_is25_2100.RData")
 load("~/KRST/Analysis/results_currentnm_2455_is5_2100.RData")
 load("~/KRST/Analysis/results_currentnm_2455_is25_2100.RData")
@@ -57,12 +57,12 @@ Nnb.high = apply(out.5852[,which(varnames(out.5852)=="N.nb[1]"):which(varnames(o
 #Np7 = apply(out[,249:279],2,mean)
 
 #Np = rowSums(cbind(Np1,Np2,Np3,Np4,Np5,Np6,Np7))
-Nad = rowSums(cbind(Nb.5852,Nnb))
+Nad = rowSums(cbind(Nb.5852,Nnb,imm))
 
 Nad.low <- Nad.high <- rep(NA,(Time+Time.fore))
 for(i in 1:(Time+Time.fore)){
-Nad.low[i]=quantile(rowSums(cbind(out.5852[,i],out.5852[,i+(2*(Time+Time.fore))])),0.025)
-Nad.high[i] =quantile(rowSums(cbind(out.5852[,i],out.5852[,i+(2*(Time+Time.fore))])),0.975)}
+Nad.low[i]=quantile(rowSums(cbind(out.5852[,i],out.5852[,i+(2*(Time+Time.fore))],out.5852[,(i+name.imm.low-1)])),0.025)
+Nad.high[i] =quantile(rowSums(cbind(out.5852[,i],out.5852[,i+(2*(Time+Time.fore))],out.5852[,(i+name.imm.low-1)])),0.975)}
 
 par(mfrow=c(2,1))
 
@@ -86,12 +86,17 @@ lines(Nnb[1:28], x= seq(1994,2021),type="l")
 polygon(c(seq(1994,2021),rev(seq(1994,2021))),
         c(Nnb.low[1:28],rev(Nnb.high[1:28])),col=col.plot[3])
 
+lines(imm[1:28], x = seq(1994,2021), type="l", ylab="Abundance",
+      xlab="Year",ylim=c(0,max(imm.h)))
+polygon(c(seq(1994,2021), rev(seq(1994,2021))),
+        c(imm.l[1:28],rev(imm.h[1:28])),col=col.plot[5])
+
 legend("topleft", 
-       legend=c("Breeders","Non-Breeders"), pch=c(16,16),
-       bty="n",col=c(col.plot[2],col.plot[3]),
+       legend=c("Breeders","Non-Breeders","Immigrants"), pch=c(16,16),
+       bty="n",col=c(col.plot[2],col.plot[3],col.plot[5]),
        x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
 
-mtext("B) Abundance of Non-breeders and Breeders", side=3, line=.5, adj=0)
+mtext("B) Abundance by category", side=3, line=.5, adj=0)
 dev.print(tiff,"tx_ad.tiff",res=600,width=9,units="in")
 
 
@@ -132,9 +137,9 @@ for(i in 1:(Time+Time.fore)){
   Nt.high[i] =quantile(rowSums(cbind(out.2455[,i],out.2455[,i+(Time+Time.fore)])),0.975)}
 
 par(
-  mfrow=c(1,2), # panels will plot in 1 row with 3 columns
+  mfrow=c(2,1), # panels will plot in 1 row with 3 columns
   oma=c(3,3.25,3,3), # outer margins (bottom, left, top, right)
-  mai=c(0.5,0.1,0.1,0.1), # inner margins (between panels)
+  mai=c(0.75,0.1,0.1,0.1), # inner margins (between panels)
   cex=1, 	# make sure the text and points are a normal size even if your plot window is an unusual size (R likes to resize spontaneously)
   mgp=c(3,0.8,0))
 
@@ -154,10 +159,10 @@ plot(Nb, x= seq(1994,plot.year),type="l",
      xlab = "Year", ylab = "Abundance")
 polygon(c(seq(1994,plot.year),rev(seq(1994,plot.year))),
         c(Nb.low,rev(Nb.high)),col=col.plot[3])
-lines(imm, x = seq(1994,plot.year), type="l", ylab="Abundance",
+lines(imm[1:28], x = seq(1994,2021), type="l", ylab="Abundance",
      xlab="Year",ylim=c(0,max(imm.h)))
-polygon(c(seq(1994,plot.year), rev(seq(1994,plot.year))),
-        c(imm.l,rev(imm.h)),col=col.plot[5])
+polygon(c(seq(1994,2021), rev(seq(1994,2021))),
+        c(imm.l[1:28],rev(imm.h[1:28])),col=col.plot[5])
 #lines(Nb, x = seq(1991,2021), type="l", ylab="Abundance",
 #     xlab="Year",ylim=c(0,max(Nnb.high)))
 #polygon(c(seq(1991,2021), rev(seq(1991,2021))),
@@ -266,32 +271,45 @@ lam.b.is5 = matrix(NA,30000, (Time+Time.fore-1))
 lam.b.lis = matrix(NA,30000, (Time+Time.fore-1))
 lam.b.noin = matrix(NA,30000, (Time+Time.fore-1))
 
-#for(t in 1:(Time+Time.fore)){
-#  n.tot[,t] = rowSums(cbind(out[,t], out[,(2*(Time+Time.fore))+t]))
-#}
-
 for(t in 1:(Time+Time.fore-1)){ 
-  #lam[,t] = n.tot[,t+1]/n.tot[,t]
-  #lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
+  lam.b.2455[,t] = out.2455[,t+1]/out.2455[,t]
   lam.b.5852[,t] = out.5852[,t+1]/out.5852[,t]
-  #lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
-#  lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
-  #lam.b.is255[,t] = out.is255[,t+1]/out.is255[,t]
+  lam.b.is0[,t] = out.is0[,t+1]/out.is0[,t]
+  lam.b.is1[,t] = out.is1[,t+1]/out.is1[,t]
+  lam.b.is255[,t] = out.is255[,t+1]/out.is255[,t]
   lam.b.is252[,t] = out.is252[,t+1]/out.is252[,t]
-  #lam.b.is5[,t] = out.is5[,t+1]/out.is5[,t]
-  #lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
- # lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
+  lam.b.is5[,t] = out.is5[,t+1]/out.is5[,t]
+  lam.b.lis[,t] = out.lis[,t+1]/out.lis[,t]
+  lam.b.noin[,t] = out.noincu[,t+1]/out.noincu[,t]
   }
 #remove Inf from lam
-lam.b.2455[!is.finite(lam.b.2455)] = NA
-lam.b.5852[!is.finite(lam.b.5852)] = NA
-lam.b.is0[!is.finite(lam.b.is0)] = NA
-lam.b.is1[!is.finite(lam.b.is1)]= NA
+lam.b.2455[!is.finite(lam.b.2455)] = 0
+lam.b.5852[!is.finite(lam.b.5852)] = 0
+lam.b.is0[!is.finite(lam.b.is0)] = 0
+lam.b.is1[!is.finite(lam.b.is1)]= 0
 lam.b.is255[!is.finite(lam.b.is255)]=0
 lam.b.is252[!is.finite(lam.b.is252)]=0
 lam.b.is5[!is.finite(lam.b.is5)]=0
-lam.b.lis[!is.finite(lam.b.lis)] = NA
-lam.b.noin[!is.finite(lam.b.noin)] = NA
+lam.b.lis[!is.finite(lam.b.lis)] = 0
+lam.b.noin[!is.finite(lam.b.noin)] = 0
+
+#calculate average year population is extripated
+extrip.year = matrix(NA,30000,5)
+for(i in 1:30000){
+  extrip.year[i,1] = max(which(out.is0[i,1:107]>0))
+  extrip.year[i,2] = max(which(out.is252[i,1:107]>0))
+  extrip.year[i,3] = max(which(out.is255[i,1:107]>0))
+  extrip.year[i,4] = max(which(out.is5[i,1:107]>0))
+  extrip.year[i,5] = max(which(out.is1[i,1:107]>0))}
+
+idx = extrip.year<107
+
+extirp.out = matrix(NA,3,5)
+for(i in 1:5){
+extirp.out[1,i]=quantile(extrip.year[idx[,i],i],.025)+(2021-28)
+extirp.out[2,i]=quantile(extrip.year[idx[,i],i],.5)+(2021-28)
+extirp.out[3,i]=quantile(extrip.year[idx[,i],i],.975)+(2021-28)
+}
 
 #geo mean of lambda through future
 geo_mean <- function(data){
@@ -316,39 +334,76 @@ gm.lam.noin = geo_mean(lam.b.noin[,29:106])
 gm.lam.is255[!is.finite(gm.lam.is255)] = 0
 gm.lam.is252[!is.finite(gm.lam.is252)] = 0
 gm.lam.is5[!is.finite(gm.lam.is5)] = 0
+gm.lam.is0[!is.finite(gm.lam.is0)] =0
+gm.lam.is1[!is.finite(gm.lam.is1)] = 0
 
-boxplot(cbind(gm.lam.2455,gm.lam.5852,gm.lam.is1,
-              gm.lam.is0,gm.lam.lis,gm.lam.noin),
+#boxplot of not all in situ management
+boxplot(cbind(gm.lam.2455,gm.lam.5852,gm.lam.lis,
+              gm.lam.noin),
         ylab = expression(lambda),
         names = c("Current,SSP2","Current,SSP5",
-                  "All In Situ -1","All In Situ 0",
-                  "Limited In Situ","No Incubation"),outline=FALSE)
+                  "Limited In Situ","All Corrals"),
+        outline=FALSE)
 abline(h=1)
 
-zero.gm.2455 = length(which(gm.lam.2455==0))
-zero.gm.5852 = length(which(gm.lam.5852==0))
-zero.gm.is1 = length(which(gm.lam.is1==0))
-zero.gm.is0 = which(gm.lam.is0==0)
-zero.gm.lis = which(gm.lam.lis==0)
-zero.gm.noin = which(gm.lam.noin==0)
+dev.print(tiff,"geo_lam.tiff",res=600,width=9,units="in")
 
-lam.low = apply(lam[,1:(Time-1)],2,quantile,0.025,na.rm=TRUE)
-lam.high = apply(lam[,1:(Time-1)],2,quantile,0.975,na.rm=TRUE)
+zero.gm.2455 = length(which(gm.lam.2455==0))/30000
+zero.gm.5852 = length(which(gm.lam.5852==0))/30000
+zero.gm.is1 = length(which(gm.lam.is1==0))/30000
+zero.gm.is0 = length(which(gm.lam.is0==0))/30000
+zero.gm.is5 = length(which(gm.lam.is5==0))/30000
+zero.gm.is252 = length(which(gm.lam.is252==0))/30000
+zero.gm.is255 = length(which(gm.lam.is255==0))/30000
+zero.gm.lis = length(which(gm.lam.lis==0))/30000
+zero.gm.noin = length(which(gm.lam.noin==0))/30000
+
+#boxplot of all in situ management
+boxplot(cbind(gm.lam.is0, 
+              gm.lam.is252,gm.lam.is255,
+              gm.lam.is5,gm.lam.is1),
+        ylab = expression(lambda),
+        names = c("Effect = 0", 
+                  "Effect = -0.25, SSP2",
+                  "Effect = -0.25, SSP5",
+                  "Effect =  -0.5",
+                  "Effect = -1"),outline=FALSE)
+mtext(expression(lambda), side=2, line=2.5,las=1)
+
+text(x=1,y=0.5,labels=paste0("P(N = 0) = ",round(zero.gm.is0,2)))
+text(x=2,y=0.5,labels=paste0("P(N = 0) = ",round(zero.gm.is252,2)))
+text(x=3,y=0.5,labels=paste0("P(N = 0) = ",round(zero.gm.is255,2)))
+text(x=4,y=0.5,labels=paste0("P(N = 0) = ",round(zero.gm.is5,2)))
+text(x=5,y=0.5,labels=paste0("P(N = 0) = ",round(zero.gm.is1,2)))
+
+abline(h=1)
+
+dev.print(tiff,"geo_lam_insitu.tiff",res=600,width=11,units="in")
+
 lam.low.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.is0 = apply(lam.b.is0[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.is1 = apply(lam.b.is1[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.is255 = apply(lam.b.is255[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.is252 = apply(lam.b.is252[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
+lam.low.fore.is5 = apply(lam.b.is5[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.lis = apply(lam.b.lis[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 lam.low.fore.noin = apply(lam.b.noin[,(Time):(Time+Time.fore-1)],2,quantile,0.025,na.rm=TRUE)
 
 lam.high.fore.2455 = apply(lam.b.2455[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
 lam.high.fore.5852 = apply(lam.b.5852[,(Time):(Time+Time.fore-1)],2,quantile,0.975)
+
+lam.b.is0[!is.finite(lam.b.is0)] = 0
+lam.b.is1[!is.finite(lam.b.is1)] = 0
+lam.b.is255[!is.finite(lam.b.is255)] = 0
+lam.b.is252[!is.finite(lam.b.is252)] = 0
+lam.b.is5[!is.finite(lam.b.is5)] = 0
 lam.high.fore.is0 = apply(lam.b.is0[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.is1 = apply(lam.b.is1[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.is255 = apply(lam.b.is255[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.is252 = apply(lam.b.is252[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
+lam.high.fore.is5 = apply(lam.b.is5[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
+
 lam.high.fore.lis = apply(lam.b.lis[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 lam.high.fore.noin = apply(lam.b.noin[,(Time):(Time+Time.fore-1)],2,quantile,0.975,na.rm=TRUE)
 
@@ -364,32 +419,131 @@ lam.med.all.noin = apply(lam.b.noin[,1:(Time+Time.fore-1)],2,quantile,0.5,na.rm=
 
 par(mfrow=c(1,1))
 #vioplot(lam[,-1],ylim=c(0,3),names=seq(1993,(1991+Time+Time.fore)))
-boxplot(cbind(lam.b.2455[,1:(Time-1)],matrix(NA,30000,(Time.fore-1))),
+boxplot(cbind(lam.b.2455[,1:(Time-1)]),
         ylab = expression(lambda),
-        names = seq(1995,(1993+Time+Time.fore-1)),outline=FALSE)
+        names = seq(1995,(1993+Time)),outline=FALSE)
 
-#plot(y=lam.med.all, x=seq(1992,(1991+Time+Time.fore-1)),
-#     type="l",ylim=c(min(lam.low),max(lam.high)),
-#     lty=2,lwd=3,ylab=expression(lambda),
-#     xlab="Year")
-#polygon(c(seq(1995,(1994+Time-1)), 
-#          rev(seq(1995,(1994+Time-1)))),
-#        c(lam.low,rev(lam.high)),
-#        col=col.plot[1])
+#Not all in situ scenarios
+par(
+  mfrow=c(2,2), # panels will plot in 1 row with 3 columns
+  oma=c(3,3.25,3,3), # outer margins (bottom, left, top, right)
+  mai=c(0.5,0.1,0.1,0.1), # inner margins (between panels)
+  cex=1, 	# make sure the text and points are a normal size even if your plot window is an unusual size (R likes to resize spontaneously)
+  mgp=c(3,0.8,0))
 
-polygon(c(seq(Time,(Time+Time.fore-1)), 
-          rev(seq(Time,(Time+Time.fore-1)))),
-        c(lam.low.fore.2455,rev(lam.high.fore.2455)),
+lam.not.insitu = array(data = cbind(lam.low.fore.2455,
+                              lam.low.fore.5852,
+                              lam.low.fore.lis,
+                              lam.low.fore.noin,
+                              lam.med.all.2455[Time:(Time+Time.fore-1)],
+                              lam.med.all.5852[Time:(Time+Time.fore-1)],
+                              lam.med.all.lis[Time:(Time+Time.fore-1)],
+                              lam.med.all.noin[Time:(Time+Time.fore-1)],
+                              lam.high.fore.2455,
+                              lam.high.fore.5852,
+                              lam.high.fore.lis,
+                              lam.high.fore.noin),
+                       dim=c(79,4,3))
+
+scenarios = c("Current, SSP2","Current, SSP5",
+              "Limited In Situ","All Corrals")
+
+for(i in 1:4){
+  
+  boxplot(#cbind(lam.b.2455[,(Time-2):(Time-1)],
+          matrix(NA,30000,(Time.fore+1)),
+          ylab = expression(lambda),outline=FALSE,
+          xaxt='n',yaxt="n",
+          ylim = c(0.5, max(lam.not.insitu[,,3])))
+
+  polygon(c(seq(3,(Time.fore+2)), 
+          rev(seq(3,(Time.fore+2)))),
+        c(lam.not.insitu[,i,1],rev(lam.not.insitu[,i,3])),
           col=col.plot[3])
-polygon(c(seq(Time,(Time+Time.fore-1)), 
-          rev(seq(Time,(Time+Time.fore-1)))),
-        c(lam.low.fore.5852,rev(lam.high.fore.5852)),
-        col=col.plot[5])
-#in situ effects = 0
-polygon(c(seq(Time,(Time+Time.fore-1)), 
-          rev(seq(Time,(Time+Time.fore-1)))),
-        c(lam.low.fore.is0,rev(lam.high.fore.is0)),
-        col=col.plot[2])
+
+  lines(y=lam.not.insitu[,i,2],
+      x=seq(3,(Time.fore+2)),lwd=2)
+
+  abline(h=1)
+  
+  if(i==1 | i==2){
+  axis(side=1, at=seq(1,81,by=10),labels=FALSE,las=1)}
+  if(i==3 | i==4){
+  axis(side=1, at=seq(1,81,by=10),
+       labels=seq(2020,2100,by=10),las=1)}
+  
+  axis(side=2, labels=(i==1|i==3), las=1)	# will add tick marks in every case, but labels only on the first panel
+  if(i==1|i==3) mtext(expression(lambda), side=2, line=2.5,las=1)
+  if(i==3|i==4) mtext("Year", side=1, line=2)
+  
+  # add panel title:
+  mtext(paste0("Scenario ",i,": ", scenarios[i]), side=3,  adj=0)
+  }
+
+dev.print(tiff,"lam_2100_notinsitu.tiff",res=600,width=9,units="in")
+
+## in situ only
+
+par(
+  mfrow=c(3,2),
+  oma=c(3,3.25,3,3), # outer margins (bottom, left, top, right)
+  mai=c(0.5,0.1,0.1,0.1), # inner margins (between panels)
+  cex=1, 	# make sure the text and points are a normal size even if your plot window is an unusual size (R likes to resize spontaneously)
+  mgp=c(3,0.8,0))
+
+lam.all.insitu = array(cbind(lam.low.fore.is0,
+                     lam.low.fore.is252,
+                     lam.low.fore.is255,
+                     lam.low.fore.is5,
+                     lam.low.fore.is1,
+                     lam.med.all.is0[Time:(Time+Time.fore-1)],
+                     lam.med.all.is252[Time:(Time+Time.fore-1)],
+                     lam.med.all.is255[Time:(Time+Time.fore-1)],
+                     lam.med.all.is5[Time:(Time+Time.fore-1)],
+                     lam.med.all.is1[Time:(Time+Time.fore-1)],
+                     lam.high.fore.is0,
+                     lam.high.fore.is252,
+                     lam.high.fore.is255,
+                     lam.high.fore.is5,
+                     lam.high.fore.is1),
+                     dim=c(79,5,3))
+
+scenarios = c("All In Situ 0","All In Situ -0.25,SSP2",
+              "All In Situ -0.25,SSP5","All In Situ -0.5",
+              "All In Situ -1")
+
+for(i in 1:5){
+  
+  boxplot(#cbind(lam.b.2455[,(Time-2):(Time-1)],
+          matrix(NA,30000,(Time.fore+1)),
+          ylab = expression(lambda),outline=FALSE,
+          xaxt='n',yaxt="n",
+          ylim = c(0, 3))
+
+  polygon(c(seq(3,(Time.fore+2)), 
+          rev(seq(3,(Time.fore+2)))),
+        c(lam.all.insitu[,i,1],rev(lam.all.insitu[,i,3])),
+        col=col.plot[3])
+  lines(y=lam.all.insitu[,i,2],
+        x=seq(3,(Time.fore+2)),lwd=2)
+  abline(h=1)
+
+if(i==1|i==2|i==3){
+  axis(side=1, at=seq(1,81,by=10),labels=FALSE,las=1)}
+if(i==4 | i==5){
+  axis(side=1, at=seq(1,81,by=10),
+       labels=seq(2020,2100,by=10),las=1)}
+
+axis(side=2, labels=(i==1|i==3|i==5), las=1)	# will add tick marks in every case, but labels only on the first panel
+if(i==1|i==3|i==5) mtext(expression(lambda), side=2, line=2.5,las=1)
+if(i==4|i==5) mtext("Year", side=1, line=2)
+
+# add panel title:
+mtext(paste0("Scenario ",i+4,": ", scenarios[i]), side=3,  adj=0)
+}
+
+dev.print(tiff,"lam_2100_insitu.tiff",res=600,width=9,units="in")
+
 #in situ effects = -1
 polygon(c(seq(Time,(Time+Time.fore-1)), 
           rev(seq(Time,(Time+Time.fore-1)))),
@@ -406,10 +560,7 @@ polygon(c(seq(Time,(Time+Time.fore-1)),
         c(lam.low.fore.noin,rev(lam.high.fore.noin)),
         col=col.plot[5])
 
-lines(y=lam.med.all.5852[Time:(Time+Time.fore-1)],
-      x=seq(Time,(Time+Time.fore-1)),lty=3,lwd=2)
-lines(y=lam.med.all.2455[Time:(Time+Time.fore-1)],
-      x=seq(Time,(Time+Time.fore-1)),lty=1,lwd=2)
+
 lines(y=lam.med.all.is0[Time:(Time+Time.fore-1)],
       x=seq(Time,(Time+Time.fore-1)),lty=1,lwd=2)
 lines(y=lam.med.all.is1[Time:(Time+Time.fore-1)],
@@ -422,17 +573,30 @@ lines(y=lam.med.all.noin[Time:(Time+Time.fore-1)],
 
 abline(h=1)
 
-lines(x=c(2042,2042),y=c(0,4))
-lines(x=c(106,106),y=c(0,4))
+dev.print(tiff,"lam_2021.tiff",res=600,width=9,units="in")
+
+
+lines(x=c(20,20),y=c(0,4))
+lines(x=c(81,81),y=c(0,4))
 
 #probability that lambda is > 1 at certain time periods
 #20 years in future
-prob.less.0 = ecdf(lam.b.is5[,48])
-1-prob.less.0(.99)
+lam.name = array(c(lam.b.2455,lam.b.5852,
+                   lam.b.lis,lam.b.noin,lam.b.is0,
+                   lam.b.is255,lam.b.is252,
+                   lam.b.is5,lam.b.is1),
+                 dim=c(30000,106,9))
+lam.2042 = rep(NA,9)
+lam.2100 = rep(NA,9)
+
+for(i in 1:9){
+prob.less.0 = ecdf(lam.name[,48,i])
+lam.2042[i]=1-prob.less.0(.99)
 
 #2100
-prob.less.0=ecdf(lam.b.is5[,106])
-1-prob.less.0(.99)
+prob.less.0=ecdf(lam.name[,106,i])
+lam.2100[i]=1-prob.less.0(.99)
+}
 
 text(x=53,y=4,labels=expression(P(lambda > 1) == 0.53))
 text(x=101,y=4,lables=expression(P(lambda > 1) == 0.60))
@@ -458,16 +622,16 @@ boxplot(out.5852[,1522],out.5852[,1523],
 
 #### survival rates through time ####
 
-phi.plot = as.matrix(out[,1416:1521])
-boxplot(phi.plot,names=seq(1992,(1990+Time+Time.fore)),
+phi.plot = as.matrix(out.2455[,1416:1442])
+boxplot(phi.plot,names=seq(1995,(1993+Time)),
         ylab = "Adult Survival",outline=FALSE)
-abline(h=(1/(1+exp(-(mean(out.5852[,1407]))))))
+#abline(h=(1/(1+exp(-(mean(out.5852[,1407]))))))
 
 dev.print(tiff,"ad_surv.tiff",res=600,width=9,units="in")
 
 ##### covs plots ####
 #climate effects
-clim.cov.plot = out[,311]
+#clim.cov.plot = out[,311]
 
 bio5 = subset(hist.bioc.means,bioc == "bio5")
 bio5.fore = subset(bioc.forecast,bioc=="bio5")
@@ -484,23 +648,35 @@ legend("topleft",legend=c("SSP2","SSP5"),pch=c(16,16),
        col=c(col.plot[3],col.plot[2]))
 
 #yrs 1-24
-seq.plot = seq(min(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov)),
-               max(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov)),
+seq.plot = seq(min(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov[1:79])),
+               max(c(bio5.245.5$bio5.ann,bio5.245.5$bio5.fore.cov[1:79])),
                length.out=100)
 
 #demonstration of effect of -1 on prob of nest success
-demo.plot = matrix(NA,30000,100)
+demo.plot = array(NA,dim=c(30000,100,3))
 for(j in 1:100){
-demo.plot[,j] = 1/(1+exp(-(out.is252[,1414]+out.is252[,1082]*seq.plot[j])))
+  demo.plot[,j,1] = 1/(1+exp(-(out.is252[,1414]+out.is252[,1082]*seq.plot[j])))
+  demo.plot[,j,2] = 1/(1+exp(-(out.is5[,1414]+out.is5[,1082]*seq.plot[j])))
+  demo.plot[,j,3] = 1/(1+exp(-(out.is1[,1414]+out.is1[,1082]*seq.plot[j])))
 }
 clim = seq(min(subset(hist.bioc.means,bioc == "bio5")$mean),41,length.out=100)
-plot(y = apply(demo.plot,2,quantile,.5), x = clim,
-     type= "l", ylab = "Prob. of Egg Success", xlab = "Max Temp",
-     ylim = c(0,1))
-lines(y = apply(demo.plot,2,quantile,.025), x = clim,
-      lty = 2)
-lines(y = apply(demo.plot,2,quantile,.975), x = clim,
-      lty = 2)
+plot(y = apply(demo.plot[,,1],2,quantile,.5), x = clim,
+     type= "l", ylab = "Hatching Probability", 
+     xlab = expression(paste("Max Temp ",degree,"C")),
+     ylim = c(0,1),col=col.plot[1])
+lines(y = apply(demo.plot[,,2],2,quantile,.5), x = clim,
+      col=col.plot[2])
+lines(y = apply(demo.plot[,,3],2,quantile,.5), x = clim,
+      col=col.plot[3])
+lines(y=rep(.63,100),x=clim, col=col.plot[4])
+
+legend("bottomleft", 
+       legend=c("No Effect","-0.25 Effect","-0.5 Effect",
+                "-1 Effect"), pch=c(16,16,16,16),
+       bty="n",col=c(col.plot[4],col.plot[1:3]),
+       x.intersp=0.7, y.intersp=1.0, cex=1.1, pt.cex=1.5)
+
+dev.print(tiff,"insitu_effect.tiff",res=600,width=9,units="in")
 
 plot.low.incu <- plot.low.cor.pais <-
   plot.low.cor.spi <- plot.high.incu <-
@@ -509,23 +685,23 @@ plot.low.incu <- plot.low.cor.pais <-
 for(j in 1:100){
   #bioclim 5
   #order: "Low,Incu","low,Cor,PAIS", "Low,Cor,SPI","High,Incu","High,Cor","In situ")
-  plot.low.incu[,j] = 1/(1+exp(-(out[,659]+ 
-                                   out[,599]*seq.plot[j])))
+  plot.low.incu[,j] = 1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[1]")]+ 
+                                   out.2455[,which(varnames(out.2455)=="beta.temp[1]")]*seq.plot[j])))
   
-  plot.low.cor.pais[,j] = 1/(1+exp(-(out[,660]+ 
-                                   out[,600]*seq.plot[j])))
+  plot.low.cor.pais[,j] = 1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[2]")]+ 
+                                   out.2455[,which(varnames(out.2455)=="beta.temp[2]")]*seq.plot[j])))
 
-  plot.low.cor.spi[,j] = 1/(1+exp(-(out[,661]+ 
-                                   out[,601]*seq.plot[j])))
+  plot.low.cor.spi[,j] = 1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[3]")]+ 
+                                   out.2455[,which(varnames(out.2455)=="beta.temp[3]")]*seq.plot[j])))
   
-  plot.high.incu[,j] = 1/(1+exp(-(out[,662]+ 
-                                   out[,602]*seq.plot[j])))
+  plot.high.incu[,j] = 1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[4]")]+ 
+                                   out.2455[,which(varnames(out.2455)=="beta.temp[4]")]*seq.plot[j])))
   
-  plot.high.cor[,j] = 1/(1+exp(-(out[,663]+ 
-                                   out[,603]*seq.plot[j])))
+  plot.high.cor[,j] = 1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[5]")]+ 
+                                   out.2455[,which(varnames(out.2455)=="beta.temp[5]")]*seq.plot[j])))
   
-  plot.insitu[,j] = 1/(1+exp(-(out[,664]+ 
-                                   out[,604]*seq.plot[j])))
+  plot.insitu[,j] = 1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[6]")]+ 
+                                   out.2455[,which(varnames(out.2455)=="beta.temp[6]")]*seq.plot[j])))
   }
 
 plot.low.incu2.low = apply(plot.low.incu, 2, function(x) quantile(x, probs = c(0.025)))
@@ -552,8 +728,10 @@ plot.insitu2.low = apply(plot.insitu,2,function(x) quantile(x,probs = 0.025))
 plot.insitu2 = apply(plot.insitu,2,function(x) quantile(x,probs = 0.5))
 plot.insitu2.high = apply(plot.insitu,2,function(x) quantile(x,probs = 0.975))
 
-cov.mean = mean(c(bio5$mean,bio5.fore.245$mean[1]))
-cov.sd = sd(c(bio5$mean,bio5.fore.245$mean[1]))
+bio5.fore.245 = subset(bio5.fore,ssp == "245")
+
+cov.mean = mean(c(bio5$mean,bio5.fore.245$mean))
+cov.sd = sd(c(bio5$mean,bio5.fore.245$mean))
 plot.tmp = (seq.plot*cov.sd)+cov.mean 
 plot.x = seq(min(plot.tmp),max(plot.tmp),length.out = 100)
 
@@ -567,53 +745,53 @@ par(
   mgp=c(3,0.8,0))
 
 plot(plot.low.incu2,type="l",x=plot.x,cex=1.2,
-     ylim=c(0,1),xaxt="n",yaxt="n",col=col.plot[1],
+     ylim=c(0,1),xaxt="n",yaxt="n",#col=col.plot[1],
      lwd=2)
-lines(plot.low.incu2.low,lty=2,x=plot.x,col=col.plot[1],lwd=2)
-lines(plot.low.incu2.high,lty=2,x=plot.x,col=col.plot[1],lwd=2)
+lines(plot.low.incu2.low,lty=2,x=plot.x,lwd=2)
+lines(plot.low.incu2.high,lty=2,x=plot.x,lwd=2)
 mtext("A) Low Risk, Incubator", side=3, line=.5, adj=0)
 axis(side=2, labels=TRUE, las=1)
 axis(side=1, labels=FALSE, las=1)
 
-plot(plot.low.cor.pais2,type="l",x=plot.x,col=col.plot[2],lwd=2,ylim=c(0,1),
+plot(plot.low.cor.pais2,type="l",x=plot.x,lwd=2,ylim=c(0,1),
      xaxt="n",yaxt="n")
-lines(plot.low.cor.pais2.low,lty=2,x=plot.x,col=col.plot[2],lwd=2)
-lines(plot.low.cor.pais2.high,lty=2,x=plot.x,col=col.plot[2],lwd=2)
+lines(plot.low.cor.pais2.low,lty=2,x=plot.x,lwd=2)
+lines(plot.low.cor.pais2.high,lty=2,x=plot.x,lwd=2)
 mtext("B) Low Risk, Corral, PAIS", side=3, line=.5, adj=0)
 axis(side=2, labels=FALSE, las=1)
 axis(side=1, labels=FALSE, las=1)
 
 plot(plot.high.incu2,type="l",x=plot.x,
-     col=col.plot[4],lwd=2,ylim=c(0,1),
+     lwd=2,ylim=c(0,1),
      xaxt="n",yaxt="n")
-lines(plot.high.incu2.low,lty=2,x=plot.x,col=col.plot[4],lwd=2)
-lines(plot.high.incu2.high,lty=2,x=plot.x,col=col.plot[4],lwd=2)
+lines(plot.high.incu2.low,lty=2,x=plot.x,lwd=2)
+lines(plot.high.incu2.high,lty=2,x=plot.x,lwd=2)
 mtext("D) High Risk, Incubator, PAIS and North", side=3, line=.5, adj=0)
 axis(side=1, at=NULL, labels=FALSE)
 axis(side=2, labels=FALSE, las=1)
 
-plot(plot.low.cor.spi2,type="l",x=plot.x,col=col.plot[3],lwd=2,ylim=c(0,1),
+plot(plot.low.cor.spi2,type="l",x=plot.x,lwd=2,ylim=c(0,1),
      xaxt="n",yaxt="n")
-lines(plot.low.cor.spi2.high,lty=2,x=plot.x,col=col.plot[3],lwd=2)
-lines(plot.low.cor.spi2.low,lty=2,x=plot.x,col=col.plot[3],lwd=2)
+lines(plot.low.cor.spi2.high,lty=2,x=plot.x,lwd=2)
+lines(plot.low.cor.spi2.low,lty=2,x=plot.x,lwd=2)
 mtext("C) Low Risk, Corral, SPI", side=3, line=.5, adj=0)
 axis(side=1, labels=TRUE, las=1)
 axis(side=2, labels=TRUE, las=1)
 
 plot(plot.high.cor2,type="l",x=plot.x,
-     col=col.plot[5],lwd=2,ylim=c(0,1),
+     lwd=2,ylim=c(0,1),
      xaxt="n",yaxt="n")
-lines(plot.high.cor2.low,lty=2,x=plot.x,col=col.plot[5],lwd=2)
-lines(plot.high.cor2.high,lty=2,x=plot.x,col=col.plot[5],lwd=2)
+lines(plot.high.cor2.low,lty=2,x=plot.x,lwd=2)
+lines(plot.high.cor2.high,lty=2,x=plot.x,lwd=2)
 mtext("E) High Risk, Corral, SPI", side=3, line=.5, adj=0)
 axis(side=1, at=NULL, labels=TRUE)
 axis(side=2, labels=FALSE, las=1)
 
 plot(plot.insitu2,type="l",x=plot.x,
-     col=col.plot[6],lwd=2,ylim=c(0,1),
+     lwd=2,ylim=c(0,1),
      xaxt="n",yaxt="n")
-lines(plot.insitu2.low,lty=2,x=plot.x,col=col.plot[6],lwd=2)
-lines(plot.insitu2.high,lty=2,x=plot.x,col=col.plot[6],lwd=2)
+lines(plot.insitu2.low,lty=2,x=plot.x,lwd=2)
+lines(plot.insitu2.high,lty=2,x=plot.x,lwd=2)
 mtext("F) In situ", side=3, line=.5, adj=0)
 axis(side=1, at=NULL, labels=TRUE)
 axis(side=2, labels=FALSE, las=1)
@@ -621,19 +799,22 @@ axis(side=2, labels=FALSE, las=1)
 mtext("Max Temp (C) of Warmest Month", 
       side=1, line=1, at=0.5,
       outer=TRUE)
-mtext("Egg Success", side=2, line=1.5, 
+mtext("Hatching Probability", side=2, line=1.5, 
       at=0.5,outer=TRUE,las=0)
 
+dev.print(tiff,"climate_nests.tiff",res=600,width=9,units="in")
 
 #nest management effects
 #order: "Low,Incu","low,Cor,PAIS", "Low,Cor,SPI",
 # "High,Incu","High,Cor","In situ")
-good.corr.pais.plot = 1/(1+exp(-(out.5852[,1410])))
-good.corr.spi.plot = 1/(1+exp(-(out.5852[,1411])))
-good.incu.plot = 1/(1+exp(-(out.5852[,1409])))
-ngood.corr.plot = 1/(1+exp(-(out.5852[,1413])))
-ngood.incu.plot = 1/(1+exp(-(out.5852[,1412])))
-insitu.plot = 1/(1+exp(-(out.5852[,1414])))
+good.corr.pais.plot = 1/(1+exp(-(out.2455[,1410])))
+good.corr.spi.plot = 1/(1+exp(-(out.2455[,1411])))
+good.incu.plot = 1/(1+exp(-(out.2455[,1409])))
+ngood.corr.plot = 1/(1+exp(-(out.2455[,1413])))
+ngood.incu.plot = 1/(1+exp(-(out.2455[,1412])))
+insitu.plot = 1/(1+exp(-(out.2455[,1414])))
+
+quantile(1/(1+exp(-(out.2455[,which(varnames(out.2455)=="nest.cov[3]")]))),c(0.025,0.5,0.975))
 
 par(mfrow = c(1,1))
 
@@ -643,7 +824,7 @@ boxplot(good.corr.pais.plot,good.corr.spi.plot,
         names = c("Low,Cor,PAIS", "Low,Cor,SPI",
                   "Low,Incu",
                   "High,Cor","High,Incu","In situ"),
-        ylab = "Survival Probability",outline = FALSE)
+        ylab = "Hatching Probability",outline = FALSE)
 
 #points(x=5,y=0.63,col="red",pch=16)
 dev.print(tiff,"nest_mange.tiff",res=600,width=9,units="in")

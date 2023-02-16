@@ -1173,7 +1173,7 @@ save(out.current.2455.is1,file = "results_currentnm_2455_is1_2100.RData")
 #### close incubation, moderate global change, insitu beta = -1 ####
 
 slr.scenario = "0.5 - MED"
-nest.mange.fore = c(0,59,24,0,1,1) #low,incu; low,cor,PAIS; low,cor,SPI; high,incu; high,cor; insitu
+nest.mange.fore = c(0,74,24,0,1,1) #low,incu; low,cor,PAIS; low,cor,SPI; high,incu; high,cor; insitu
 bio5.245.5 = make.fore.dat(hist.bioc.means = hist.bioc.means, 
                            clim.var = "bio5", 
                            ssp.in = 245, 
@@ -1253,9 +1253,9 @@ out2455.noincu <- clusterEvalQ(clus2455.noincu,{
   return(as.mcmc(as.matrix(CmodelMCMC$mvSamples)))
 })
 
-out.noincu.2455 <- as.mcmc.list(out2455.noincu)
+a_out.noincu.2455 <- as.mcmc.list(out2455.noincu)
 
-save(out.noincu.2455,file = "results_noincu_2455_2100.RData")
+save(a_out.noincu.2455,file = "results_noincu_2455_2100_c.RData")
 
 #### in situ @ Closed Beach (2%) & Mansfield Channel (5% of nests), mod global change, insitu beta = -1 ####
 
