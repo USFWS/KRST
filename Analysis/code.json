@@ -1,0 +1,46 @@
+[
+  {
+    "name": "KRST",
+    "organization": "U.S. Fish & Wildlife Service",
+    "description": "Integrated population model for Kemp's ridley sea turtle",
+    "version": "0.1.0",
+    "status": "Development",
+
+    "permissions": {
+      "usageType": "openSource",
+      "licenses": [
+        {
+          "name": "Public Domain, CC0-1.0",
+          "URL": "https://github.com/USFWS/KRST/blob/main/LICENSE.md"
+        }
+      ]
+    },
+
+    "homepageURL": "https://github.com/USFWS/KRST",
+    "downloadURL": "https://github.com/USFWS/KRST/archive/refs/heads/main.zip",
+    "disclaimerURL": "https://github.com/USFWS/KRST/blob/main/DISCLAIMER.md",
+    "repositoryURL": "https://github.com/USFWS/KRST.git",
+    "vcs": "git",
+
+    "laborHours": 200,
+
+    "tags": [
+      "usfws"
+    ],
+
+    "languages": [
+      "r",
+      "json",
+      "md",
+    ],
+
+    "contact": {
+      "name": "Beth Ross",
+      "email": "beth_ross@fws.gov"
+    },
+
+    "date": {
+      "metadataLastUpdated": "2023-08-31"
+    }
+  }
+]
